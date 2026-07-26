@@ -84,7 +84,7 @@ Use AskUserQuestion with two questions:
    - *User (recommended)*: files → `~/.claude/statuslines/thoridor/`, config → `~/.claude/settings.json`.
    - *Project*: files → `<project>/.claude/statuslines/thoridor/`, config → `<project>/.claude/settings.json` (committable, applies to teammates too).
 2. **Profile** — `magni` (model / context / location — recommended default) or `eli-magi` (model / location / context).
-3. **Glyphs** — first print this exact test line to the user: `Icon test: [  ] ← do these render as a lightning bolt, folder, and branch symbol?` Then ask: icons visible → `nerd` (recommended); boxes/blanks/question marks → offer BOTH options: (a) `unicode` glyphs, which work in any font right now (the gauge uses `ϟ`), or (b) help installing a Nerd Font from nerdfonts.com and selecting it in their terminal profile, then use `nerd`. Font install is optional — never a requirement.
+3. **Glyphs** — first print this exact test line to the user: `Icon test: [  ] ← do these render as a lightning bolt, folder, and branch symbol?` Then ask: icons visible → `nerd` (recommended); boxes/blanks/question marks → offer BOTH options: (a) `unicode` glyphs, which work in any font right now (the gauge uses `ϟ`), or (b) install a Nerd Font — follow the **NERD FONT INSTALL** section below — then use `nerd`. Font install is optional — never a requirement.
 
 If not inside a project directory, skip question 1 and install user-wide.
 
@@ -147,6 +147,23 @@ echo '{"model":{"id":"claude-opus-5"},"workspace":{"current_dir":"'"$PWD"'"},"co
 ```
 
 Expect three colored rows and exit code 0. Then tell the user to restart Claude Code (or start a new session) to see it live, and how to switch profiles later.
+
+## NERD FONT INSTALL (when the user opts for the nicer icons)
+
+Recommend JetBrainsMono Nerd Font (any Nerd Font works). Run what you can for the user; hand over where it's interactive:
+
+- **macOS**: `brew install --cask font-jetbrains-mono-nerd-font` (no tap needed on current Homebrew). No brew → download the zip from nerdfonts.com/font-downloads, unzip, double-click the `.ttf` files → "Install Font" (or copy to `~/Library/Fonts/`).
+- **Windows**: `winget install DEVCOM.JetBrainsMonoNerdFont`; or with scoop: `scoop bucket add nerd-fonts && scoop install JetBrainsMono-NF`; or download the zip, select all `.ttf` files → right-click → Install.
+- **Linux**: Arch: `sudo pacman -S ttf-jetbrains-mono-nerd`. Others (works everywhere): download the zip, `mkdir -p ~/.local/share/fonts && unzip JetBrainsMono.zip -d ~/.local/share/fonts && fc-cache -fv`.
+
+Then the crucial step users forget — **select the font in the terminal profile** (installing alone changes nothing):
+
+- Windows Terminal: Settings → profile → Appearance → Font face → "JetBrainsMono Nerd Font".
+- iTerm2: Settings → Profiles → Text → Font. macOS Terminal.app: Settings → Profiles → Font.
+- GNOME Terminal / Konsole / kitty / Ghostty: the profile's font setting or config file.
+- VS Code integrated terminal: setting `terminal.integrated.fontFamily` = `"JetBrainsMono Nerd Font"`.
+
+New font usually needs a fresh terminal window. Finish by re-running the icon test line from Step 2; when icons render, set glyphs to `nerd` (`setup.py set-glyphs --scope <scope> --glyphs nerd`).
 
 ## SWITCH PROFILE / TURN OFF
 
