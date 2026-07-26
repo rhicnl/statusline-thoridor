@@ -4,7 +4,13 @@ A three-row animated statusline for [Claude Code](https://claude.com/claude-code
 
 > ⚡ The guide below walks through the Claude Code version; Pi users jump to [Pi version](#pi-version).
 
+**Claude Code:**
+
 [![Thoridor statusline in action — thunder gauge animating while Claude works](media/statusline-thoridor-claude.gif)](media/statusline-thoridor-claude.mp4)
+
+**Pi:**
+
+[![Thoridor statusline in action in Pi — thunder gauge animating while the agent works](media/statusline-thoridor-pi.gif)](media/statusline-thoridor-pi.mp4)
 
 - **Model row** (blue) — provider/model and thinking effort.
 - **Context row** (yellow) — a 26-cell thunder gauge of context usage that *animates while Claude is working*, plus percentage, tokens, and session cost.
@@ -151,8 +157,6 @@ Later you can also say things like *"switch thoridor to eli-magi"*, *"turn the t
 ## Pi version
 
 The repo also ships Thoridor for the Pi coding agent, as a Pi **extension** plus an installer skill.
-
-[![Thoridor statusline in action in Pi — thunder gauge animating while the agent works](media/statusline-thoridor-pi.gif)](media/statusline-thoridor-pi.mp4)
 
 - Skill (recommended): copy `.agents/skills/pi-statusline-thoridor/` into your Pi skills folder (e.g. `~/.pi/agent/skills/`) and ask Pi to install thoridor — it runs a preflight, asks global vs project and the same icon-test glyph question, installs via the bundled script, and handles profiles, turn-off, and troubleshooting.
 - Script install (one command, no skill needed): `node .agents/skills/pi-statusline-thoridor/scripts/setup.mjs install --scope global` (or `--scope project --project-dir <project>`; add `--profile eli-magi --glyphs unicode` as desired), then `/reload` in Pi or restart it.
