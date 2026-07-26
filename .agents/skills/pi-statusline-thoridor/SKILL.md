@@ -30,7 +30,7 @@ node "<skill-dir>/scripts/setup.mjs" <command> --scope global|project [--project
 | Command | Does |
 |---|---|
 | `check` | Read-only preflight: template present, per-scope installed/disabled state (add `--project-dir` to include project scope) |
-| `install` | Copy the extension into the scope's Pi extensions dir (also clears a stale disable); accepts `--profile` and `--glyphs` |
+| `install` | Copy the extension into the scope's Pi extensions dir (also clears a stale disable); always writes the scope's `thoridor.json` config — from `--profile`/`--glyphs`, else previously configured values, else defaults `magni`+`nerd` |
 | `config` | Set `--profile magni\|eli-magi\|off` and/or `--glyphs nerd\|unicode` persistently (written to the extension's `thoridor.json`; env vars override) |
 | `disable` | Add the `extensions` exclude to the scope's Pi settings.json — the config-level off switch |
 | `enable` | Remove that exclude |

@@ -9,7 +9,7 @@ Thoridor is a three-row statusline for Claude Code:
 
 1. **Identity** — `provider/model` and thinking effort.
 2. **Location** — directory, git branch, changed-file count, and PR (separators in neutral gray).
-3. **Context** — a 26-cell animated "thunder gauge" of context usage, percentage, tokens, and session cost.
+3. **Context** — a 26-cell animated "thunder gauge" of context usage, percentage, tokens, and session cost. If `autoCompactWindow` is set in settings.json (project scope wins over user), the gauge maxes out there instead of at the full context window — absolute tokens (> 100), a percent (1–100), or a fraction (≤ 1) of the window.
 
 Row colors are fixed — model row blue (`#3333ff`/`#0000ff`), folder/branch row red (`#ff0000`), context row yellow. Profiles pick the **row order** (or turn the statusline off):
 

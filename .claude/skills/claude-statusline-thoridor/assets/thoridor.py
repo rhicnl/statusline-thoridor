@@ -272,6 +272,30 @@ def format_tokens(count: int) -> str:
     return str(count)
 
 
+def read_auto_compact_window(input_data: dict[str, Any]) -> float | None:
+    """`autoCompactWindow` from settings.json — project scope first, then user.
+
+    The value may be absolute tokens (> 100), a percentage (1 < value <= 100),
+    or a fraction (0 < value <= 1) of the model context window.
+    """
+    workspace = input_data.get("workspace") or {}
+    candidates: list[Path] = []
+    for base in (workspace.get("project_dir"), workspace.get("current_dir")):
+        if base:
+            candidate = Path(base) / ".claude" / "settings.json"
+            if candidate not in candidates:
+                candidates.append(candidate)
+    candidates.append(Path.home() / ".claude" / "settings.json")
+    for path in candidates:
+        try:
+            value = json.loads(path.read_text(encoding="utf-8")).get("autoCompactWindow")
+        except (OSError, ValueError):
+            continue
+        if isinstance(value, (int, float)) and not isinstance(value, bool) and value > 0:
+            return float(value)
+    return None
+
+
 def get_context_data(input_data: dict[str, Any]) -> tuple[int, int, int]:
     context = input_data.get("context_window") or {}
     current_usage = context.get("current_usage") or {}
@@ -287,6 +311,18 @@ def get_context_data(input_data: dict[str, Any]) -> tuple[int, int, int]:
         )
 
     context_window = int(context.get("context_window_size") or 0)
+    auto_compact = read_auto_compact_window(input_data)
+    if auto_compact is not None:
+        if auto_compact <= 1:
+            gauge_max = context_window * auto_compact
+        elif auto_compact <= 100:
+            gauge_max = context_window * auto_compact / 100
+        else:
+            gauge_max = auto_compact
+        if gauge_max > 0:
+            percentage = round(current * 100 / gauge_max)
+            return max(0, min(100, percentage)), max(0, int(current)), int(gauge_max)
+
     documented_percentage = context.get("used_percentage")
     if documented_percentage is not None:
         percentage = round(float(documented_percentage))

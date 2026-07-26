@@ -210,8 +210,15 @@ function cmdInstall(args) {
     saveSettings(settingsPath, settings);
     reenabled = true;
   }
-  const config = args.profile !== undefined || args.glyphs !== undefined ? writeLocalConfig(extDir, args) : undefined;
-  return { ok: true, action: "install", scope: args.scope, ext_dir: extDir, reenabled, ...(config ? { config } : {}), next: "run /reload in Pi or restart it" };
+  // Always materialize the scope's config so the install is explicit on disk;
+  // re-installs keep previously configured values unless flags override them.
+  const configFile = path.join(extDir, "thoridor.json");
+  const existing = fs.existsSync(configFile) ? JSON.parse(fs.readFileSync(configFile, "utf8")) : {};
+  const config = writeLocalConfig(extDir, {
+    profile: args.profile ?? existing.profile ?? "magni",
+    glyphs: args.glyphs ?? existing.glyphs ?? "nerd",
+  });
+  return { ok: true, action: "install", scope: args.scope, ext_dir: extDir, reenabled, config, next: "run /reload in Pi or restart it" };
 }
 
 function cmdConfig(args) {
