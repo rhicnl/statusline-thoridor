@@ -36,7 +36,7 @@ node "<skill-dir>/scripts/setup.mjs" <command> --scope global|project [--project
 | `enable` | Remove that exclude |
 | `uninstall` | Delete the extension dir and remove the exclude |
 
-After any change: `/reload` in a running Pi (or restart it), then verify — footer present and `/thoridor-statusline` registered (or absent, after disable/uninstall). Read the printed JSON: `ok: false` carries an `error` saying what to fix. Any command that edits an existing Pi settings.json first copies it to `settings.json.bak-<timestamp>` and lists the copies under `settings_backups` — mention that safety net to the user.
+After any change: `/reload` in a running Pi (or restart it), then verify — footer present and `/thoridor-statusline` registered (or absent, after disable/uninstall). Read the printed JSON: `ok: false` carries an `error` saying what to fix. Any command that changes an existing config file — a Pi settings.json or the extension's thoridor.json — first copies it to `<file>.bak-<timestamp>` and lists the copies under `settings_backups` (unchanged content is neither rewritten nor backed up) — mention that safety net to the user.
 
 ## Template contents (`templates/statusline-thoridor/`)
 

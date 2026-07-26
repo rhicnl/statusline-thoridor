@@ -77,8 +77,9 @@ function loadSettings(file) {
   return data;
 }
 
-// Failsafe: copy an existing settings.json aside before the first write to it.
-function backupSettings(file) {
+// Failsafe: copy an existing config file aside before the first write to it
+// (settings.json and thoridor.json alike).
+function backupFile(file) {
   if (!fs.existsSync(file) || settingsBackups.some((b) => b.startsWith(`${file}.bak-`))) return;
   const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
   let backup = `${file}.bak-${stamp}`;
@@ -88,7 +89,7 @@ function backupSettings(file) {
 }
 
 function saveSettings(file, data) {
-  backupSettings(file);
+  backupFile(file);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const tmp = `${file}.${process.pid}.tmp`;
   fs.writeFileSync(tmp, JSON.stringify(data, null, 2) + "\n");
@@ -113,8 +114,13 @@ function writeLocalConfig(extDir, args) {
     if (!GLYPH_MODES.includes(args.glyphs)) fail(`--glyphs must be one of: ${GLYPH_MODES.join(", ")}`, 2);
     config.glyphs = args.glyphs;
   }
+  const content = JSON.stringify(config, null, 2) + "\n";
+  if (fs.existsSync(file)) {
+    if (fs.readFileSync(file, "utf8") === content) return config; // unchanged — no write, no backup
+    backupFile(file);
+  }
   const tmp = `${file}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, JSON.stringify(config, null, 2) + "\n");
+  fs.writeFileSync(tmp, content);
   fs.renameSync(tmp, file);
   return config;
 }
