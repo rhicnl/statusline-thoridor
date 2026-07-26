@@ -1,6 +1,6 @@
-# statusline-thoridor
+# THORIDOR STATUSLINE
 
-A three-row animated statusline for [Claude Code](https://claude.com/claude-code) **and** the [Pi](https://github.com/badlogic/pi-mono) coding agent (where Thoridor originally comes from). This repo is all you need — this README plus, for each agent, the statusline packaged as an installer skill that sets everything up itself.
+A three-row animated statusline for [Claude Code](https://claude.com/claude-code) **and** the [Pi](https://github.com/badlogic/pi-mono) coding agent. This repo is all you need — this README plus, for each agent, the statusline packaged as an installer skill that sets everything up itself.
 
 > ⚡ The guide below walks through the Claude Code version; Pi users jump to [Pi version](#pi-version).
 
