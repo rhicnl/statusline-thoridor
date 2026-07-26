@@ -1,6 +1,6 @@
 # statusline-thoridor
 
-A portable, three-row animated statusline for [Claude Code](https://claude.com/claude-code), packaged as a Claude Code **skill** that installs and configures itself.
+A three-row animated statusline for [Claude Code](https://claude.com/claude-code). This repo is all you need — a README (this file) and the statusline packaged as a Claude Code **skill** that installs and configures itself.
 
 ```
  anthropic/claude-opus-5  xhigh
@@ -19,42 +19,108 @@ Two color profiles:
 | `magni` (default) | blue | red |
 | `eli-magi` | red | blue |
 
-## Install
+## Requirements
+
+- Python 3.10 or newer (`python3 --version` / `python --version`)
+- A truecolor terminal (Windows Terminal, iTerm2, kitty, Ghostty, and most modern terminals)
+- A [Nerd Font](https://www.nerdfonts.com/) selected in your terminal, for the lightning/folder/branch glyphs
+- Works on Linux, macOS, and Windows
+
+## Easy install (recommended)
 
 Copy the skill into your Claude Code skills folder:
 
+**Linux / macOS**
+
 ```bash
-# user-wide
 git clone https://github.com/rhicnl/statusline-thoridor
 mkdir -p ~/.claude/skills
 cp -r statusline-thoridor/.claude/skills/statusline-thoridor ~/.claude/skills/
 ```
 
-(or clone straight into a project — the skill already lives at `.claude/skills/statusline-thoridor/`, so it's picked up there automatically.)
+**Windows (PowerShell)**
 
-Then start Claude Code and say:
+```powershell
+git clone https://github.com/rhicnl/statusline-thoridor
+New-Item -ItemType Directory -Force "$HOME\.claude\skills" | Out-Null
+Copy-Item -Recurse statusline-thoridor\.claude\skills\statusline-thoridor "$HOME\.claude\skills\"
+```
+
+Then start (or restart) Claude Code and type:
 
 ```
 /statusline-thoridor install
 ```
 
-The skill runs preflight checks (OS, Python ≥ 3.10, git, existing statusline config), asks whether to install user-wide or per-project and which profile you want, copies the files, wires up `settings.json` (statusline command + the lifecycle hooks that drive the animation), and verifies the result. Works on Linux, macOS, and Windows.
+Claude checks your system, asks two questions (install for your user or just this project? which color profile?), wires everything up, and verifies it. Afterwards, restart Claude Code and enjoy the lightning. ⚡
 
-It also handles `switch profile`, `uninstall`, and troubleshooting — just ask.
+Later you can also say things like *"switch thoridor to eli-magi"*, *"uninstall thoridor"*, or *"my statusline looks wrong"* — the same skill handles all of it.
 
-## Requirements
+## Install instructions for AI agents
 
-- Python 3.10+
-- A truecolor terminal (Windows Terminal, iTerm2, kitty, Ghostty, …)
-- A [Nerd Font](https://www.nerdfonts.com/) for the lightning/folder/branch glyphs
+> If you are an AI coding agent (Claude Code or similar) asked to install this statusline and the skill above is not available, follow these steps exactly.
+
+1. **Preflight.** Detect the OS. Confirm Python ≥ 3.10 exists (`python3` on Linux/macOS, `python` on Windows — use that command in every step below). Confirm whether `~/.claude/settings.json` (or the project's `.claude/settings.json`) already has a `statusLine` entry; if so, tell the user what it is and get their OK to replace it.
+
+2. **Ask the user** (a) user-wide or project install, and (b) profile `magni` or `eli-magi`.
+
+3. **Copy the two scripts** from this repo's `.claude/skills/statusline-thoridor/assets/` — `thoridor.py` and `working_state.py` — into the install directory, keeping them side by side:
+   - user-wide: `~/.claude/statuslines/thoridor/`
+   - project: `<project>/.claude/statuslines/thoridor/`
+
+4. **Edit the settings file** (`~/.claude/settings.json` for user-wide, `<project>/.claude/settings.json` for project — merge into existing JSON, never overwrite other keys):
+
+   ```json
+   {
+     "statusLine": {
+       "type": "command",
+       "command": "python3 \"<INSTALL_DIR>/thoridor.py\" --profile magni",
+       "padding": 0,
+       "refreshInterval": 1
+     }
+   }
+   ```
+
+   Replace `<INSTALL_DIR>` with the absolute install path (for project installs you may use `$CLAUDE_PROJECT_DIR/.claude/statuslines/thoridor`). On Windows use `python` and forward slashes in the path. Do not wrap the command in `uv run` — it only slows every refresh down.
+
+5. **Add the animation hooks.** Append (don't replace existing hooks) this entry to **each** of the hook events `SessionStart`, `UserPromptSubmit`, `Stop`, `StopFailure`, and `SessionEnd` in the same settings file:
+
+   ```json
+   {
+     "hooks": [
+       { "type": "command", "command": "python3 \"<INSTALL_DIR>/working_state.py\"", "timeout": 5 }
+     ]
+   }
+   ```
+
+   These let the gauge animate only while Claude is working. Skipping them keeps the statusline functional but static.
+
+6. **Verify.** Pipe a sample payload through the exact command you configured and expect three colored rows, exit code 0:
+
+   ```bash
+   echo '{"model":{"id":"claude-opus-5"},"workspace":{"current_dir":"'"$PWD"'"},"context_window":{"used_percentage":42,"context_window_size":200000,"current_usage":{"total":84000}},"cost":{"total_cost_usd":1.23}}' | python3 "<INSTALL_DIR>/thoridor.py" --profile magni
+   ```
+
+7. Tell the user to restart Claude Code, and how to switch profiles later (edit `--profile` in the settings command).
+
+**Uninstall:** remove the `statusLine` block and the five `working_state.py` hook entries from the settings file, then delete the install directory.
+
+## Troubleshooting
+
+- **Boxes or missing symbols** → your terminal font is not a Nerd Font; install one and select it in the terminal profile.
+- **Washed-out colors** → your terminal lacks truecolor support; switch terminals.
+- **Gauge never animates** → the `working_state.py` hooks are missing or point to the wrong path (step 5). Note Claude Code refreshes the statusline about once per second, so the animation is coarse by design.
+- **No branch on row 2** → not inside a git repo, or git isn't installed.
+- **Branch info looks stale** → expected: git info is cached for a few seconds (longer while Claude is generating). Delete `<INSTALL_DIR>/.state/git-*.json` to force a refresh.
+- **An error line appears instead of the statusline** → run the verify command from step 6 to see the traceback.
+- `python3 thoridor.py --help` prints the built-in usage text.
 
 ## How it works
 
-- `assets/thoridor.py` renders the three rows from the JSON Claude Code pipes to statusline commands (`--help` for details). No third-party dependencies.
-- `assets/working_state.py` runs as a lifecycle hook (SessionStart / UserPromptSubmit / Stop / StopFailure / SessionEnd) and tracks whether Claude is generating, so the thunder gauge only animates while Claude works.
-- Git branch/status is cached per directory (4 s TTL, atomically written; stale data tolerated while generating) so the once-per-second refresh stays ~35 ms.
-
-The context bar shows Claude Code's own numbers: raw usage over the model's full context window (200k, or 1M for extended-context models). Claude Code does not expose its auto-compact threshold to statuslines, so "distance to compaction" isn't shown.
+- `thoridor.py` renders the three rows from the JSON Claude Code pipes to statusline commands. No third-party dependencies.
+- `working_state.py` runs as a lifecycle hook and tracks whether Claude is generating, so the thunder gauge only animates while Claude works.
+- Git branch/status is cached per directory (4 s TTL, atomic writes; stale data tolerated while generating) so the once-per-second refresh stays around 35 ms.
+- The context bar shows Claude Code's own numbers: raw usage over the model's full context window (200k, or 1M for extended-context models). Claude Code does not expose its auto-compact threshold to statuslines, so "distance to compaction" isn't shown.
 
 ## Credits
 
