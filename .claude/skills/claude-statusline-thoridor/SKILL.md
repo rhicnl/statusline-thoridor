@@ -82,7 +82,7 @@ These are real questions for the user — never answer them yourself or silently
 
 1. **Scope** — "Install for your user (all projects) or just this project?"
    - *User (recommended)*: files → `~/.claude/statuslines/thoridor/`, config → `~/.claude/settings.json`.
-   - *Project*: files → `<project>/.claude/statuslines/thoridor/`, config → `<project>/.claude/settings.json` (committable, applies to teammates too).
+   - *Project*: files → `<project>/.claude/statuslines/thoridor/`, config → `<project>/.claude/settings.json` (committable, applies to teammates too). `<project>` is the user's own project — the directory they were working in when they asked — **never** a fresh clone of this repo; the clone is only the installation source and is disposable afterwards.
 2. **Profile** — `magni` (model / context / location — recommended default) or `eli-magi` (model / location / context).
 3. **Glyphs** — first print these two exact test lines to the user:
 

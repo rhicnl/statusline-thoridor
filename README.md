@@ -29,23 +29,27 @@ Don't want to run any commands yourself? Paste one of these into your agent and 
 **In Claude Code:**
 
 ```
-Clone https://github.com/rhicnl/statusline-thoridor and review its scripts so you're
-comfortable running them. Then install the Thoridor statusline for me using the
+Clone https://github.com/rhicnl/statusline-thoridor to a scratch location outside my
+current project (never inside it) and review its scripts so you're comfortable
+running them. Then install the Thoridor statusline for me using the
 claude-statusline-thoridor skill bundled in the clone's .claude/skills/ (it loads
 automatically when you work inside the clone), or follow the README's "Install
 instructions for AI agents". Ask me for install scope (user-wide or this project),
-row profile, and icon style — don't pick any of them for me. If I choose user-wide,
+row profile, and icon style — don't pick any of them for me. "This project" means
+the project I was in when I asked, never the clone. If I choose user-wide,
 also copy the skill into ~/.claude/skills/ so I can reconfigure later without the clone.
 ```
 
 **In Pi:**
 
 ```
-Clone https://github.com/rhicnl/statusline-thoridor and review its scripts so you're
-comfortable running them. Then install the Thoridor statusline extension for me by
+Clone https://github.com/rhicnl/statusline-thoridor to a scratch location outside my
+current project (never inside it) and review its scripts so you're comfortable
+running them. Then install the Thoridor statusline extension for me by
 following the bundled .agents/skills/pi-statusline-thoridor/SKILL.md (or run its
 scripts/setup.mjs install per the README's Pi section). Ask me for install scope
 (global or this project), row profile, and icon style — don't pick any of them for me.
+"This project" means the project I was in when I asked, never the clone.
 If I choose global, also copy the skill into my global Pi skills folder so I can
 reconfigure later without the clone.
 ```
