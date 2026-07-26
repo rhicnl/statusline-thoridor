@@ -210,6 +210,13 @@ function cmdInstall(args) {
     saveSettings(settingsPath, settings);
     reenabled = true;
   }
+  // Materialize the scope's settings.json (even empty) so the install is a
+  // complete, visible Pi config dir — Pi discovers the extension either way.
+  let settingsCreated = false;
+  if (!fs.existsSync(settingsPath)) {
+    saveSettings(settingsPath, settings);
+    settingsCreated = true;
+  }
   // Always materialize the scope's config so the install is explicit on disk;
   // re-installs keep previously configured values unless flags override them.
   const configFile = path.join(extDir, "thoridor.json");
@@ -218,7 +225,7 @@ function cmdInstall(args) {
     profile: args.profile ?? existing.profile ?? "magni",
     glyphs: args.glyphs ?? existing.glyphs ?? "nerd",
   });
-  return { ok: true, action: "install", scope: args.scope, ext_dir: extDir, reenabled, config, next: "run /reload in Pi or restart it" };
+  return { ok: true, action: "install", scope: args.scope, ext_dir: extDir, settings: settingsPath, settings_created: settingsCreated, reenabled, config, next: "run /reload in Pi or restart it" };
 }
 
 function cmdConfig(args) {
