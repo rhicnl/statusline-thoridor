@@ -6,20 +6,21 @@ A three-row animated statusline for [Claude Code](https://claude.com/claude-code
 
 ```
  anthropic/claude-opus-5  xhigh
-  \~/dev/my-project ·  main · 3 changed · PR#42
  ϟϟϟϟϟϟϟϟϟϟϟ··············· 42% (84k/200k)                                $1.23
+  \~/dev/my-project ·  main · 3 changed · PR#42
 ```
 
-1. **Identity** — provider/model and thinking effort.
-2. **Location** — directory, git branch, changed-file count, and PR.
-3. **Context** — a 26-cell thunder gauge of context usage that *animates while Claude is working*, plus percentage, tokens, and session cost.
+- **Model row** (blue) — provider/model and thinking effort.
+- **Context row** (yellow) — a 26-cell thunder gauge of context usage that *animates while Claude is working*, plus percentage, tokens, and session cost.
+- **Location row** (red) — directory, git branch, changed-file count, and PR.
 
-Two color profiles:
+Colors are fixed; the **profile** picks the row order — or turns the statusline off:
 
-| Profile | Row 1 (model/effort) | Row 2 (dir/git) |
-|---|---|---|
-| `magni` (default) | blue | red |
-| `eli-magi` | red | blue |
+| Profile | Rows |
+|---|---|
+| `magni` (default) | model / context / location |
+| `eli-magi` | model / location / context |
+| `off` | statusline hidden (nothing rendered) |
 
 ## Requirements
 
@@ -56,7 +57,7 @@ Then start (or restart) Claude Code and type:
 
 Claude checks your system, asks two questions (install for your user or just this project? which color profile?), wires everything up, and verifies it. Afterwards, restart Claude Code and enjoy the lightning. ⚡
 
-Later you can also say things like *"switch thoridor to eli-magi"*, *"uninstall thoridor"*, or *"my statusline looks wrong"* — the same skill handles all of it.
+Later you can also say things like *"switch thoridor to eli-magi"*, *"turn the thoridor statusline off"* (yes, that's allowed 😄 — profile `off` hides it without uninstalling), *"uninstall thoridor"*, or *"my statusline looks wrong"* — the same skill handles all of it.
 
 ## Install instructions for AI agents
 
@@ -64,7 +65,7 @@ Later you can also say things like *"switch thoridor to eli-magi"*, *"uninstall 
 
 1. **Preflight.** Detect the OS. Confirm Python ≥ 3.10 exists (`python3` on Linux/macOS, `python` on Windows — use that command in every step below). Confirm whether `~/.claude/settings.json` (or the project's `.claude/settings.json`) already has a `statusLine` entry; if so, tell the user what it is and get their OK to replace it.
 
-2. **Ask the user** (a) user-wide or project install, and (b) profile `magni` or `eli-magi`.
+2. **Ask the user** (a) user-wide or project install, and (b) profile `magni` or `eli-magi` (the third profile, `off`, hides the statusline — offer it only when the user asks to disable Thoridor without uninstalling).
 
 3. **Copy the two scripts** from this repo's `.claude/skills/claude-statusline-thoridor/assets/` — `thoridor.py` and `working_state.py` — into the install directory, keeping them side by side:
    - user-wide: `~/.claude/statuslines/thoridor/`
@@ -103,7 +104,7 @@ Later you can also say things like *"switch thoridor to eli-magi"*, *"uninstall 
    echo '{"model":{"id":"claude-opus-5"},"workspace":{"current_dir":"'"$PWD"'"},"context_window":{"used_percentage":42,"context_window_size":200000,"current_usage":{"total":84000}},"cost":{"total_cost_usd":1.23}}' | python3 "<INSTALL_DIR>/thoridor.py" --profile magni
    ```
 
-7. Tell the user to restart Claude Code, and how to switch profiles later (edit `--profile` in the settings command).
+7. Tell the user to restart Claude Code, and how to switch profiles later: edit `--profile` in the settings command (`magni`, `eli-magi`, or `off` to hide the statusline without uninstalling).
 
 **Uninstall:** remove the `statusLine` block and the five `working_state.py` hook entries from the settings file, then delete the install directory.
 

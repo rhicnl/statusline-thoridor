@@ -1,6 +1,6 @@
 ---
 name: claude-statusline-thoridor
-description: Install, configure, or troubleshoot the Thoridor three-row animated statusline for Claude Code. Use when the user asks to install thoridor, set up the thoridor statusline, switch its color profile (magni / eli-magi), uninstall it, or asks how it works. Portable across Linux, macOS, and Windows; supports user-wide or per-project installation.
+description: Install, configure, or troubleshoot the Thoridor three-row animated statusline for Claude Code. Use when the user asks to install thoridor, set up the thoridor statusline, switch its profile (magni / eli-magi), turn it off, uninstall it, or asks how it works. Portable across Linux, macOS, and Windows; supports user-wide or per-project installation.
 ---
 
 # Thoridor Statusline Installer
@@ -11,12 +11,13 @@ Thoridor is a three-row statusline for Claude Code:
 2. **Location** — directory, git branch, changed-file count, and PR (separators in neutral gray).
 3. **Context** — a 26-cell animated "thunder gauge" of context usage, percentage, tokens, and session cost.
 
-Two color profiles:
+Row colors are fixed — model row blue (`#3333ff`/`#0000ff`), folder/branch row red (`#ff0000`), context row yellow. Profiles pick the **row order** (or turn the statusline off):
 
-| Profile | Row 1 (model/effort) | Row 2 (dir/git) |
-|---|---|---|
-| `magni` (default) | blue `#3333ff` / `#0000ff` | red `#ff0000` |
-| `eli-magi` | red `#ff0000` / `#cc0000` | blue `#3333ff` |
+| Profile | Row order |
+|---|---|
+| `magni` (default) | model / context gauge + cost / folder & branch |
+| `eli-magi` | model / folder & branch / context gauge + cost |
+| `off` | renders nothing — statusline hidden |
 
 Files shipped in `assets/` next to this SKILL.md:
 
@@ -26,7 +27,7 @@ Files shipped in `assets/` next to this SKILL.md:
 ## Mode selection
 
 - User says install / set up → **INSTALL** (below).
-- User wants the other profile → **SWITCH PROFILE**.
+- User wants the other profile, or the statusline temporarily off → **SWITCH PROFILE / TURN OFF**.
 - User wants it gone → **UNINSTALL**.
 - User asks how it works / it looks wrong → **HELP & TROUBLESHOOTING**.
 
@@ -50,7 +51,7 @@ Use AskUserQuestion with two questions:
 1. **Scope** — "Install for your user (all projects) or just this project?"
    - *User (recommended)*: files → `~/.claude/statuslines/thoridor/`, config → `~/.claude/settings.json`.
    - *Project*: files → `<project>/.claude/statuslines/thoridor/`, config → `<project>/.claude/settings.json` (committable, applies to teammates too).
-2. **Profile** — `magni` (blue row 1, red row 2 — recommended default) or `eli-magi` (red row 1, blue row 2).
+2. **Profile** — `magni` (model / context / location — recommended default) or `eli-magi` (model / location / context).
 
 If not inside a project directory, skip question 1 and install user-wide.
 
@@ -103,9 +104,9 @@ echo '{"model":{"id":"claude-opus-5"},"workspace":{"current_dir":"'"$PWD"'"},"co
 
 Expect three colored rows and exit code 0. Then tell the user to restart Claude Code (or start a new session) to see it live, and how to switch profiles later.
 
-## SWITCH PROFILE
+## SWITCH PROFILE / TURN OFF
 
-Edit the `--profile` value in the configured `statusLine.command` (find it in whichever settings.json holds it). Alternatively the user can set the `THORIDOR_PROFILE` env var — the flag wins over the env var.
+Edit the `--profile` value in the configured `statusLine.command` (find it in whichever settings.json holds it). Alternatively the user can set the `THORIDOR_PROFILE` env var — the flag wins over the env var. `--profile off` renders nothing, hiding the statusline without uninstalling — the quick "turn it off" switch; pick a real profile again to bring it back.
 
 ## UNINSTALL
 

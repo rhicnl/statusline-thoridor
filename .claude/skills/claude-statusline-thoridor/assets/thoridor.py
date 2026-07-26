@@ -4,13 +4,15 @@
 # ///
 """Thoridor — a three-row animated statusline for Claude Code.
 
-Row 1: provider/model and thinking effort
-Row 2: working directory, branch, changed files, and pull request
-Row 3: randomized thunder gauge, percentage, tokens, and cost
+Rows (colors are fixed; profiles pick the row ORDER):
+  model     provider/model and thinking effort (blue)
+  context   randomized thunder gauge, percentage, tokens, and cost (yellow)
+  location  working directory, branch, changed files, and pull request (red)
 
 Profiles (pick with --profile or the THORIDOR_PROFILE env var):
-  magni     row 1 blue, row 2 red   (default)
-  eli-magi  row 1 red,  row 2 blue
+  magni     model, context, location   (default)
+  eli-magi  model, location, context
+  off       render nothing (hide the statusline)
 
 Run `thoridor.py --help` for usage and installation notes.
 """
@@ -49,8 +51,12 @@ Usage:
   <project>/.claude/settings.json for a per-project install.
 
 Options:
-  --profile NAME   Color profile: magni (blue row 1, red row 2 — default)
-                   or eli-magi (red row 1, blue row 2).
+  --profile NAME   Row-order profile. Colors are fixed (model blue, context
+                   gauge yellow, folder/branch red); the profile picks the
+                   row order:
+                     magni     model / context / location   (default)
+                     eli-magi  model / location / context
+                     off       render nothing (statusline hidden)
                    The THORIDOR_PROFILE env var works too; the flag wins.
   -h, --help       Show this help.
 
@@ -81,10 +87,18 @@ THORIDOR_CONTEXT_BAR_COLOR = "#ffff1a"
 THORIDOR_CONTEXT_TEXT_COLOR = "#b3b312"
 THUNDER_FLASH_COLOR = "#ffff66"
 
-# Color profiles: "model"/"thinking" style row 1, "folder" styles row 2.
+# Row colors are fixed: provider/model blue, folder/branch red, context yellow.
+MODEL_COLOR = "#3333ff"
+THINKING_COLOR = "#0000ff"
+FOLDER_COLOR = "#ff0000"
+
+# Profiles control the ROW ORDER (row 1 is always the blue provider row):
+#   magni     model, context gauge + costs, folder/branch
+#   eli-magi  model, folder/branch, context gauge + costs
 PROFILES = {
-    "magni": {"model": "#3333ff", "thinking": "#0000ff", "folder": "#ff0000"},
-    "eli-magi": {"model": "#ff0000", "thinking": "#cc0000", "folder": "#3333ff"},
+    "magni": ("model", "context", "location"),
+    "eli-magi": ("model", "location", "context"),
+    "off": (),
 }
 DEFAULT_PROFILE = "magni"
 
@@ -102,7 +116,7 @@ STRIKE_SPEED_VARIANCE = 70
 ANSI_RE = re.compile(r"\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07\x1b]*(?:\x07|\x1b\\))")
 
 
-def resolve_profile(argv: list[str]) -> dict[str, str]:
+def resolve_profile(argv: list[str]) -> tuple[str, ...]:
     name = os.environ.get("THORIDOR_PROFILE", "")
     for index, arg in enumerate(argv):
         if arg == "--profile" and index + 1 < len(argv):
@@ -335,7 +349,7 @@ def align_right(left: str, right: str, width: int) -> str:
     return f"{clipped_left}{' ' * gap}{right}"
 
 
-def generate_status_line(input_data: dict[str, Any], profile: dict[str, str]) -> str:
+def generate_status_line(input_data: dict[str, Any], profile: tuple[str, ...]) -> str:
     terminal_width = shutil.get_terminal_size(fallback=(120, 0)).columns
     content_width = max(0, terminal_width - 3)
     workspace = input_data.get("workspace") or {}
@@ -346,17 +360,17 @@ def generate_status_line(input_data: dict[str, Any], profile: dict[str, str]) ->
     provider_model = model_id if "/" in model_id else f"anthropic/{model_id}"
     effort = (input_data.get("effort") or {}).get("level")
 
-    row1_parts = [color(hex_ansi(profile["model"]), provider_model)]
+    model_parts = [color(hex_ansi(MODEL_COLOR), provider_model)]
     if effort:
-        row1_parts.append(color(hex_ansi(profile["thinking"]), str(effort)))
-    row1 = truncate_to_width(f" {'  '.join(row1_parts)}", content_width)
+        model_parts.append(color(hex_ansi(THINKING_COLOR), str(effort)))
+    model_row = truncate_to_width(f" {'  '.join(model_parts)}", content_width)
 
     # Claude does not expose a live "generating" flag, so lifecycle hooks
     # maintain equivalent per-session working state.
     generating = is_working(input_data.get("session_id"))
 
-    directory_part = color(hex_ansi(profile["folder"]), f"{DIR_ICON} \\{format_cwd(current_dir)}")
-    row2 = f" {directory_part}"
+    directory_part = color(hex_ansi(FOLDER_COLOR), f"{DIR_ICON} \\{format_cwd(current_dir)}")
+    location_row = f" {directory_part}"
     branch, changed_files = get_git_info_cached(current_dir, generating) if current_dir else ("", 0)
     if branch:
         git_text = f"{BRANCH_ICON} {branch}"
@@ -365,8 +379,8 @@ def generate_status_line(input_data: dict[str, Any], profile: dict[str, str]) ->
         pr = format_pr(input_data)
         if pr:
             git_text += f" · {pr}"
-        row2 += color(SEPARATOR_COLOR, " · ") + color(hex_ansi(profile["folder"]), git_text)
-    row2 = truncate_to_width(row2, content_width)
+        location_row += color(SEPARATOR_COLOR, " · ") + color(hex_ansi(FOLDER_COLOR), git_text)
+    location_row = truncate_to_width(location_row, content_width)
 
     percentage, current_tokens, context_window = get_context_data(input_data)
     bar_color = THORIDOR_CONTEXT_BAR_COLOR
@@ -378,19 +392,20 @@ def generate_status_line(input_data: dict[str, Any], profile: dict[str, str]) ->
     )
     context_label = format_tokens(context_window) if context_window > 0 else "?"
     context_text_color = hex_ansi(THORIDOR_CONTEXT_TEXT_COLOR)
-    row3_left = (
+    context_left = (
         f" {progress} {color(context_text_color, f'{percentage}%')} "
         f"{color(context_text_color, f'({format_tokens(current_tokens)}/{context_label})')}"
     )
 
     cost = float((input_data.get("cost") or {}).get("total_cost_usd") or 0)
-    row3 = align_right(
-        row3_left,
+    context_row = align_right(
+        context_left,
         color(context_text_color, f"${cost:.2f}"),
         content_width,
     )
 
-    return "\n".join((row1, row2, row3))
+    rows = {"model": model_row, "location": location_row, "context": context_row}
+    return "\n".join(rows[name] for name in profile)
 
 
 def main() -> None:
@@ -402,6 +417,8 @@ def main() -> None:
     except Exception:
         pass
     profile = resolve_profile(sys.argv[1:])
+    if not profile:  # "off": print nothing, which hides the statusline
+        return
     try:
         input_text = sys.stdin.read()
         input_data = json.loads(input_text) if input_text.strip() else {}

@@ -16,6 +16,7 @@ import {
   type TokenInfoState,
 } from "./state.ts";
 import {
+  isThoridorOff,
   renderThoridorFooterRows,
   THORIDOR_ANIMATION_INTERVAL_MS,
 } from "./thoridor-statusline-renderer.ts";
@@ -74,6 +75,14 @@ export function installStatuslineRenderer(pi: ExtensionAPI) {
 
   function apply(ctx: ExtensionContext) {
     if (ctx.mode !== "tui") return;
+    if (isThoridorOff()) {
+      // THORIDOR_PROFILE=off: leave Pi's stock footer and working row alone.
+      stopAnimationTimer();
+      ctx.ui.setFooter(undefined);
+      ctx.ui.setWorkingVisible(true);
+      ctx.ui.setStatus("statusline-thoridor", undefined);
+      return;
+    }
     stopAnimationTimer();
     syncAnimationTimer();
 

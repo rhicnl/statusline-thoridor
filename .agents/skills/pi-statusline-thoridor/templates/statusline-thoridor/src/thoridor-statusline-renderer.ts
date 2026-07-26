@@ -24,20 +24,27 @@ const DIM_COLOR = "#6e6e6e";
 const BAR_WIDTH = 26;
 const THUNDER_ICON = "\uf0e7";
 const UNUSED_ICON = "·";
-// Color profiles: "model"/"thinking" style row 1, "folder" styles row 2.
-// Select via the THORIDOR_PROFILE env var; magni is the default.
-const THORIDOR_PROFILES = {
-  magni: { model: "#3333ff", thinking: "#0000ff", folder: "#ff0000" },
-  "eli-magi": { model: "#ff0000", thinking: "#cc0000", folder: "#3333ff" },
-} as const;
-type ThoridorProfile =
-  (typeof THORIDOR_PROFILES)[keyof typeof THORIDOR_PROFILES];
+// Row colors are fixed: provider/model blue, folder/branch red, context yellow.
+const THORIDOR_MODEL_COLOR = "#3333ff";
+const THORIDOR_THINKING_COLOR = "#0000ff";
+const THORIDOR_FOLDER_COLOR = "#ff0000";
 
-function resolveThoridorProfile(): ThoridorProfile {
-  const name = (process.env.THORIDOR_PROFILE ?? "")
-    .trim()
-    .toLowerCase() as keyof typeof THORIDOR_PROFILES;
-  return THORIDOR_PROFILES[name] ?? THORIDOR_PROFILES.magni;
+// Profiles control the ROW ORDER (row 1 is always the blue provider row);
+// "off" hides the statusline. Select via the THORIDOR_PROFILE env var.
+type ThoridorRow = "model" | "location" | "context";
+const THORIDOR_PROFILES: Record<string, readonly ThoridorRow[]> = {
+  magni: ["model", "context", "location"],
+  "eli-magi": ["model", "location", "context"],
+  off: [],
+};
+
+export function resolveThoridorProfile(): readonly ThoridorRow[] {
+  const name = (process.env.THORIDOR_PROFILE ?? "").trim().toLowerCase();
+  return THORIDOR_PROFILES[name] ?? THORIDOR_PROFILES["magni"]!;
+}
+
+export function isThoridorOff(): boolean {
+  return resolveThoridorProfile().length === 0;
 }
 
 const THORIDOR_CONTEXT_BAR_COLOR = "#ffff1a";
@@ -173,13 +180,13 @@ export function renderThoridorFooterRows(
   const modelStr = provider
     ? `${provider}/${modelInfo.modelId}`
     : modelInfo.modelId;
-  const modelPart = fg(profile.model, modelStr);
+  const modelPart = fg(THORIDOR_MODEL_COLOR, modelStr);
   const animationPhase = tokenInfo.generating
     ? Math.floor(Date.now() / THORIDOR_ANIMATION_INTERVAL_MS)
     : 0;
   const modelStatusParts = [modelPart];
   if (modelInfo.thinking && modelInfo.thinking !== "off")
-    modelStatusParts.push(fg(profile.thinking, modelInfo.thinking));
+    modelStatusParts.push(fg(THORIDOR_THINKING_COLOR, modelInfo.thinking));
 
   const cwd = ctx.sessionManager.getCwd();
   const pwd = formatCwd(cwd, process.env.HOME || process.env.USERPROFILE);
@@ -188,7 +195,7 @@ export function renderThoridorFooterRows(
   if (sessionName) row1 += ` ${fg(SEPARATOR_COLOR, `[${sessionName}]`)}`;
   row1 = truncateToWidth(row1, contentWidth, "...");
 
-  const dirPart = fg(profile.folder, `${DIR_ICON} \\${pwd}`);
+  const dirPart = fg(THORIDOR_FOLDER_COLOR, `${DIR_ICON} \\${pwd}`);
   let locationPart = ` ${dirPart}`;
   if (gitInfo.isRepository && gitInfo.branch) {
     let gitPart = `${BRANCH_ICON} ${gitInfo.branch}`;
@@ -196,13 +203,13 @@ export function renderThoridorFooterRows(
       gitPart += ` · ${gitInfo.changedFiles} changed`;
     const pr = renderPr(gitInfo);
     if (pr) gitPart += ` · ${pr}`;
-    locationPart += `${fg(SEPARATOR_COLOR, " · ")}${fg(profile.folder, gitPart)}`;
+    locationPart += `${fg(SEPARATOR_COLOR, " · ")}${fg(THORIDOR_FOLDER_COLOR, gitPart)}`;
   }
 
   const mcpInfo = getMcpInfoState(footerData.getExtensionStatuses());
   const row2 = alignRightOnLine(
     locationPart,
-    mcpInfo.status ? fg(profile.folder, mcpInfo.status) : "",
+    mcpInfo.status ? fg(THORIDOR_FOLDER_COLOR, mcpInfo.status) : "",
     contentWidth,
   );
 
@@ -248,9 +255,10 @@ export function renderThoridorFooterRows(
     contentWidth,
   );
 
-  return [
-    padFooterLine(row1, width),
-    padFooterLine(row2, width),
-    padFooterLine(row3, width),
-  ];
+  const rows: Record<ThoridorRow, string> = {
+    model: row1,
+    location: row2,
+    context: row3,
+  };
+  return profile.map((name) => padFooterLine(rows[name], width));
 }
