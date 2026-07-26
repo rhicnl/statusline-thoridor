@@ -85,7 +85,7 @@ UNUSED_ICON = "·"
 # Glyph sets: "nerd" needs a Nerd Font; "unicode" renders in any font.
 GLYPH_SETS = {
     "nerd": {"thunder": chr(0xF0E7), "dir": chr(0xF07B) + " ", "branch": chr(0xE0A0) + " "},
-    "unicode": {"thunder": "ϟ", "dir": "", "branch": ""},
+    "unicode": {"thunder": "ϟ", "dir": "⌂ ", "branch": "⎇ "},
 }
 THUNDER_ICON = GLYPH_SETS["nerd"]["thunder"]
 DIR_ICON = GLYPH_SETS["nerd"]["dir"]

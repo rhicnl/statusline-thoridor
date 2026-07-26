@@ -70,8 +70,8 @@ export function isThoridorOff(): boolean {
 const THORIDOR_CONTEXT_BAR_COLOR = "#ffff1a";
 const THORIDOR_CONTEXT_TEXT_COLOR = "#b3b312";
 const THUNDER_FLASH_COLOR = "#ffff66";
-const DIR_ICON = NERD ? "\uf07b " : "";
-const BRANCH_ICON = NERD ? "\ue0a0 " : "";
+const DIR_ICON = NERD ? "\uf07b " : "⌂ ";
+const BRANCH_ICON = NERD ? "\ue0a0 " : "⎇ ";
 const THUNDER_STRIKE_FRAMES = [
   { glyph: UNUSED_ICON, intensity: 0.25, flash: 0, emphasis: "dim" },
   { glyph: "ϟ", intensity: 0.7, flash: 0.45, emphasis: "normal" },
