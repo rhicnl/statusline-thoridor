@@ -231,7 +231,18 @@ function cmdInstall(args) {
     profile: args.profile ?? existing.profile ?? "magni",
     glyphs: args.glyphs ?? existing.glyphs ?? "nerd",
   });
-  return { ok: true, action: "install", scope: args.scope, ext_dir: extDir, settings: settingsPath, settings_created: settingsCreated, reenabled, config, next: "run /reload in Pi or restart it" };
+  // A project install must beat an existing global install, which requires the
+  // global copy to carry the yield-to-project guard. Refresh the global copy's
+  // code too (its thoridor.json config is untouched) so scopes never diverge.
+  let globalRefreshed = false;
+  if (args.scope === "project") {
+    const { extDir: globalExtDir } = resolvePaths("global", null, args.home);
+    if (fs.existsSync(path.join(globalExtDir, "index.ts"))) {
+      fs.cpSync(TEMPLATE_DIR, globalExtDir, { recursive: true });
+      globalRefreshed = true;
+    }
+  }
+  return { ok: true, action: "install", scope: args.scope, ext_dir: extDir, settings: settingsPath, settings_created: settingsCreated, reenabled, config, global_extension_refreshed: globalRefreshed, next: "run /reload in Pi or restart it" };
 }
 
 function cmdConfig(args) {
