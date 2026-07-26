@@ -29,6 +29,28 @@ Colors are fixed; the **profile** picks the row order — or turns the statuslin
 - Optional: a [Nerd Font](https://www.nerdfonts.com/) for the fancy lightning/folder/branch icons — **not required**: the `unicode` glyph mode renders `ϟ` gauge, `⌂` folder, and `⎇` branch icons in any normal font (the installer asks which you want)
 - Works on Linux, macOS, and Windows
 
+## Zero-effort install — just paste a prompt
+
+Don't want to run any commands yourself? Paste one of these into your agent and let it do everything (it will ask you a couple of questions along the way):
+
+**In Claude Code:**
+
+```
+Clone https://github.com/rhicnl/statusline-thoridor and install the Thoridor statusline
+for me. Follow the repo README's "Install instructions for AI agents" exactly — or better,
+copy .claude/skills/claude-statusline-thoridor into ~/.claude/skills/ first and use that skill.
+```
+
+**In Pi:**
+
+```
+Clone https://github.com/rhicnl/statusline-thoridor and install the Thoridor statusline
+extension for me. Copy .agents/skills/pi-statusline-thoridor into my Pi skills folder and
+follow its SKILL.md, or run its scripts/setup.mjs install directly per the README's Pi section.
+```
+
+Your agent will check your system, ask install scope / color profile / icon style, wire everything up, and verify it. Prefer doing it yourself? Read on.
+
 ## Easy install (recommended)
 
 Copy the skill into your Claude Code skills folder:
