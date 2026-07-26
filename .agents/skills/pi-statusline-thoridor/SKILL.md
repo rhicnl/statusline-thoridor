@@ -60,21 +60,18 @@ The extension is self-contained: it imports only `@earendil-works/pi-coding-agen
 
 ## INSTALL
 
-**Hard gate: do not run `setup.mjs install` until the user has answered the scope question (step 2) and the profile + glyph questions (step 4).** Being told "install thoridor" is not an answer to any of them. If the user pre-answered some in their request (e.g. "install in this project"), honor that and ask only the rest. Never substitute your own guess for an unanswered question — pausing to ask is correct behavior, not a failure to make progress.
+**Hard gate: do not run `setup.mjs install` until the user has answered the scope question (step 2), the profile question, and — when no Nerd Font was detected — the glyph question (step 4).** Being told "install thoridor" is not an answer to any of them. If the user pre-answered some in their request (e.g. "install in this project"), honor that and ask only the rest. Never substitute your own guess for an unanswered question — pausing to ask is correct behavior, not a failure to make progress.
 
-1. **Preflight.** Run `setup.mjs check` (with `--project-dir` when in a project) and report the JSON plainly. An `installed: true` scope → offer in-place update (install overwrites cleanly); `disabled: true` → installing re-enables it. Warn (don't block) that the glyphs need a truecolor terminal and a Nerd Font. Note whether `gh` is installed/authenticated — without it the PR badge simply won't show.
+1. **Preflight.** First, **before cloning or changing directories**, record the user's project root: `git rev-parse --show-toplevel` in the directory the user started in (fall back to that directory itself if it's not a git repo). That path — never the clone — is the `--project-dir` candidate for a project install, and any clone must go outside it. Then run `setup.mjs check` (with `--project-dir` when in a project) and report the JSON plainly. An `installed: true` scope → offer in-place update (install overwrites cleanly); `disabled: true` → installing re-enables it. Warn (don't block) that the glyphs need a truecolor terminal and a Nerd Font. Note whether `gh` is installed/authenticated — without it the PR badge simply won't show.
 2. **Ask the user** (a real question — never assume): global (all projects) or this project only? (Project installs live in `<project>/.pi/extensions/`, load only after the project is trusted in Pi, and are committable so teammates get it too.) For a project install, `--project-dir` is the user's own project — the directory they were working in when they asked — **never** a fresh clone of this repo; the clone is only the installation source and is disposable afterwards.
 3. **Run** `setup.mjs install --scope global` (or `--scope project --project-dir "<project>"`).
-4. **Profile & glyphs — ask the user, never decide for them.** Defaults are `magni` + `nerd`; keep both unless the **user** picks otherwise.
-   - **Profile**: ask — `magni` (model / context / location, the default) or `eli-magi` (model / location / context)?
-   - **Glyphs**: print these two exact test lines to the user and ask which line renders correctly **on their screen**:
+4. **Profile & glyphs.**
+   - **Profile**: ask the user — `magni` (model / context / location, the default) or `eli-magi` (model / location / context)? Never pick for them.
+   - **Glyphs**: decided by the `nerd_fonts` field in the `check` output (OS-level detection: registry / font dirs / fc-list), not by a visual test. Never print glyph test characters into the chat and ask what renders — the nerd icons are private-use codepoints that usually come out blank in chat, misleading the user into thinking the font is missing (and your own captured tool output can't prove rendering either).
+     - `nerd_fonts.installed: true` → use `nerd` (the default) without asking. Tell the user which font was detected and that their terminal profile must actually be set to it; if the statusline later shows boxes, one command switches: `setup.mjs config --scope <scope> --glyphs unicode`.
+     - `nerd_fonts.installed: false` → ask: (a) `--glyphs unicode` (ϟ ⌂ ⎇ — works in any font, no install) or (b) install a Nerd Font via the **NERD FONT INSTALL** section below, then `nerd`. Font install is optional — never required.
 
-   ```
-   Nerd icons:    [  ]  ← lightning, folder, branch
-   Unicode icons: [ϟ ⌂ ⎇]  ← the fallback set (works in any font)
-   ```
-
-   You cannot answer the glyph question yourself: rendering is decided by the terminal font on the user's screen, and your own captured tool output proves nothing — a `printf`/`echo` result echoed back to you often shows raw codepoints or mojibake even when the font renders the icons perfectly. Never infer from tool output, and never switch to `unicode` "to be safe" — `nerd` stays the default until the user reports the nerd line as empty/boxes. If they do: offer (a) `--glyphs unicode` (works right now, no install) or (b) a Nerd Font via the **NERD FONT INSTALL** section below (optional, never required). Persist non-default choices with `setup.mjs config --scope ... --profile eli-magi --glyphs unicode`; the `THORIDOR_PROFILE` / `THORIDOR_GLYPHS` env vars override per launch.
+   Persist non-default choices with `setup.mjs config --scope ... --profile eli-magi --glyphs unicode`; the `THORIDOR_PROFILE` / `THORIDOR_GLYPHS` env vars override per launch.
 5. **Activate**: in a running Pi session, `/reload` picks the extension up; otherwise it loads on the next Pi start. Verify: three colored rows appear as the footer, and `/thoridor-statusline` responds with "Thoridor statusline refreshed".
 
 ## NERD FONT INSTALL (when the user opts for the nicer icons)
@@ -85,7 +82,7 @@ Recommend JetBrainsMono Nerd Font (any Nerd Font works). Run what you can; hand 
 - **Windows**: `winget install DEVCOM.JetBrainsMonoNerdFont`; or `scoop bucket add nerd-fonts && scoop install JetBrainsMono-NF`; or download the zip, select the `.ttf` files → right-click → Install.
 - **Linux**: Arch: `sudo pacman -S ttf-jetbrains-mono-nerd`. Others: `mkdir -p ~/.local/share/fonts && unzip JetBrainsMono.zip -d ~/.local/share/fonts && fc-cache -fv`.
 
-Then have the user **select the font in their terminal profile** (Windows Terminal: Settings → profile → Appearance → Font face; iTerm2: Settings → Profiles → Text; GNOME/Konsole/kitty/Ghostty: profile font setting; VS Code terminal: `terminal.integrated.fontFamily`). New font needs a fresh terminal window. Re-run the icon test; when icons render, `setup.mjs config --scope <scope> --glyphs nerd` and `/reload`.
+Then have the user **select the font in their terminal profile** (Windows Terminal: Settings → profile → Appearance → Font face; iTerm2: Settings → Profiles → Text; GNOME/Konsole/kitty/Ghostty: profile font setting; VS Code terminal: `terminal.integrated.fontFamily`). New font needs a fresh terminal window. Re-run `setup.mjs check` — once `nerd_fonts.installed` is true and the user has selected the font in the terminal profile, `setup.mjs config --scope <scope> --glyphs nerd` and `/reload`; the statusline itself is the visual confirmation.
 
 ## SWITCH PROFILE / GLYPHS
 

@@ -23,6 +23,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
@@ -77,7 +78,25 @@ def load_settings(path: Path) -> dict:
     return data
 
 
+SETTINGS_BACKUPS: list[str] = []
+
+
+def backup_settings(path: Path) -> None:
+    """Failsafe: copy an existing settings.json aside before the first write to it."""
+    if not path.exists() or any(b.startswith(f"{path}.bak-") for b in SETTINGS_BACKUPS):
+        return
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    backup = Path(f"{path}.bak-{stamp}")
+    counter = 1
+    while backup.exists():
+        backup = Path(f"{path}.bak-{stamp}-{counter}")
+        counter += 1
+    shutil.copy2(path, backup)
+    SETTINGS_BACKUPS.append(str(backup))
+
+
 def save_settings(path: Path, data: dict) -> None:
+    backup_settings(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(f".{os.getpid()}.tmp")
     temporary.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
@@ -194,6 +213,79 @@ def set_command_flag(command: str, flag: str, value: str, default: str) -> str:
     return stripped if value == default else f"{stripped} --{flag} {value}"
 
 
+NERD_NAME_RE = re.compile(r"nerd ?font|(^|[ \-_])nf([ \-_.)]|$)", re.IGNORECASE)
+
+
+def detect_nerd_fonts() -> dict:
+    """Find installed Nerd Fonts (font names/files matching 'Nerd Font' or the 'NF' suffix).
+
+    Installed is not the same as selected: the terminal profile must actually use
+    one of these fonts for the glyphs to render.
+    """
+    found: set[str] = set()
+
+    def scan_names(names) -> None:
+        for name in names:
+            if name and NERD_NAME_RE.search(name):
+                found.add(str(name).strip())
+
+    def scan_dirs(dirs) -> None:
+        for d in dirs:
+            try:
+                if d and Path(d).is_dir():
+                    scan_names(p.stem for p in Path(d).rglob("*") if p.suffix.lower() in (".ttf", ".otf"))
+            except OSError:
+                continue
+
+    system = platform.system()
+    if system == "Windows":
+        try:
+            import winreg
+
+            for hive, key_path in (
+                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"),
+                (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"),
+            ):
+                try:
+                    with winreg.OpenKey(hive, key_path) as key:
+                        for i in range(winreg.QueryInfoKey(key)[1]):
+                            scan_names([winreg.EnumValue(key, i)[0]])
+                except OSError:
+                    continue
+        except ImportError:
+            pass
+        scan_dirs(
+            [
+                Path(os.environ.get("WINDIR", r"C:\Windows")) / "Fonts",
+                Path(os.environ["LOCALAPPDATA"]) / "Microsoft" / "Windows" / "Fonts"
+                if os.environ.get("LOCALAPPDATA")
+                else None,
+            ]
+        )
+    elif system == "Darwin":
+        scan_dirs([Path.home() / "Library" / "Fonts", Path("/Library/Fonts"), Path("/System/Library/Fonts")])
+    else:
+        if shutil.which("fc-list"):
+            try:
+                out = subprocess.run(["fc-list", ":", "family"], capture_output=True, text=True, timeout=15)
+                scan_names(out.stdout.splitlines())
+            except (OSError, subprocess.SubprocessError):
+                pass
+        scan_dirs(
+            [
+                Path.home() / ".local" / "share" / "fonts",
+                Path.home() / ".fonts",
+                Path("/usr/share/fonts"),
+                Path("/usr/local/share/fonts"),
+            ]
+        )
+    return {
+        "installed": bool(found),
+        "families": sorted(found)[:10],
+        "note": "installed, not necessarily selected — the terminal profile must use one of these for nerd glyphs to render",
+    }
+
+
 def cmd_check(args) -> dict:
     report: dict = {
         "ok": True,
@@ -201,6 +293,7 @@ def cmd_check(args) -> dict:
         "python": platform.python_version(),
         "python_ok": sys.version_info >= (3, 10),
         "git": shutil.which("git") is not None,
+        "nerd_fonts": detect_nerd_fonts(),
         "scopes": {},
     }
     scopes = [("user", None)]
@@ -364,6 +457,8 @@ def main() -> None:
         "verify": cmd_verify,
     }[args.command]
     result = handler(args)
+    if SETTINGS_BACKUPS:
+        result["settings_backups"] = SETTINGS_BACKUPS
     print(json.dumps(result, indent=2))
     raise SystemExit(0 if result.get("ok") else 1)
 

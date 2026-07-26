@@ -16,6 +16,7 @@
 // Settings edits are merges (other keys untouched) with atomic writes.
 // Every command prints a JSON result.
 
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -104,8 +105,68 @@ function writeLocalConfig(extDir, args) {
   return config;
 }
 
+const NERD_NAME_RE = /nerd ?font|(^|[ \-_])nf([ \-_.)]|$)/i;
+
+// Find installed Nerd Fonts (names/files matching "Nerd Font" or the "NF" suffix).
+// Installed is not the same as selected: the terminal profile must actually use one.
+function detectNerdFonts(home) {
+  const found = new Set();
+  const scanNames = (names) => {
+    for (const n of names) if (n && NERD_NAME_RE.test(n)) found.add(String(n).trim());
+  };
+  const scanDirs = (dirs) => {
+    for (const d of dirs) {
+      if (!d) continue;
+      try {
+        for (const entry of fs.readdirSync(d, { recursive: true, withFileTypes: false })) {
+          const base = path.basename(String(entry));
+          if (/\.(ttf|otf)$/i.test(base)) scanNames([base.replace(/\.(ttf|otf)$/i, "")]);
+        }
+      } catch {
+        /* dir missing or unreadable */
+      }
+    }
+  };
+  if (process.platform === "win32") {
+    for (const key of [
+      "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts",
+      "HKCU\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts",
+    ]) {
+      try {
+        scanNames(execFileSync("reg", ["query", key], { encoding: "utf8", timeout: 15000 }).split(/\r?\n/));
+      } catch {
+        /* reg unavailable */
+      }
+    }
+    scanDirs([
+      path.join(process.env.WINDIR || "C:\\Windows", "Fonts"),
+      process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, "Microsoft", "Windows", "Fonts"),
+    ]);
+  } else if (process.platform === "darwin") {
+    scanDirs([path.join(home, "Library", "Fonts"), "/Library/Fonts", "/System/Library/Fonts"]);
+  } else {
+    try {
+      scanNames(execFileSync("fc-list", [":", "family"], { encoding: "utf8", timeout: 15000 }).split("\n"));
+    } catch {
+      /* fc-list unavailable */
+    }
+    scanDirs([path.join(home, ".local", "share", "fonts"), path.join(home, ".fonts"), "/usr/share/fonts", "/usr/local/share/fonts"]);
+  }
+  return {
+    installed: found.size > 0,
+    families: [...found].sort().slice(0, 10),
+    note: "installed, not necessarily selected — the terminal profile must use one of these for nerd glyphs to render",
+  };
+}
+
 function cmdCheck(args) {
-  const report = { ok: true, node: process.version, template: fs.existsSync(path.join(TEMPLATE_DIR, "index.ts")), scopes: {} };
+  const report = {
+    ok: true,
+    node: process.version,
+    template: fs.existsSync(path.join(TEMPLATE_DIR, "index.ts")),
+    nerd_fonts: detectNerdFonts(args.home || os.homedir()),
+    scopes: {},
+  };
   const scopes = [["global", null]];
   if (args.projectDir) scopes.push(["project", args.projectDir]);
   for (const [scope, projectDir] of scopes) {

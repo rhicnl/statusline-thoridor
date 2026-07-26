@@ -67,31 +67,29 @@ Offer to run the command for them where possible; `sudo`/interactive installers 
 
 ### Step 1 — Preflight
 
-Run `setup.py check` (add `--project-dir` when inside a project) and report its JSON to the user in plain words:
+First, **before cloning or changing directories**, record the user's project root: `git rev-parse --show-toplevel` in the directory the user started in (fall back to that directory itself if it's not a git repo). That path — never a clone of this repo — is the `<project>` for a project install, and any clone must go outside it.
+
+Then run `setup.py check` (add `--project-dir` when inside a project) and report its JSON to the user in plain words:
 
 - `python_ok: false` → the found Python is older than 3.10; go back to Step 0 and help them install a current one.
 - `git: false` → row 2 will show no branch; mention it, don't block.
 - A scope with `statusline_configured: true` but `statusline_is_thoridor: false` → an unrelated statusline exists there; show its command and confirm before replacing (then pass `--force` to install). A project-level `statusLine` overrides the user-level one.
 - A scope with `installed: true` → offer an in-place update instead of a fresh install.
+- `nerd_fonts` → OS-level Nerd Font detection (registry/font dirs/fc-list); drives the glyph choice in Step 2.
 
-Also check the terminal: truecolor is required (Windows Terminal, iTerm2, kitty, etc. are fine; legacy cmd.exe is not). A Nerd Font is **optional** — see the glyph question in Step 2.
+Also check the terminal: truecolor is required (Windows Terminal, iTerm2, kitty, etc. are fine; legacy cmd.exe is not). A Nerd Font is **optional** — see the glyph handling in Step 2.
 
 ### Step 2 — Ask the user
 
-These are real questions for the user — never answer them yourself or silently pick "safe" values, and **do not run the installer until they are answered** (if the user pre-answered some in their request, ask only the rest). Use AskUserQuestion with three questions:
+These are real questions for the user — never answer them yourself or silently pick "safe" values, and **do not run the installer until they are answered** (if the user pre-answered some in their request, ask only the rest). Use AskUserQuestion:
 
 1. **Scope** — "Install for your user (all projects) or just this project?"
    - *User (recommended)*: files → `~/.claude/statuslines/thoridor/`, config → `~/.claude/settings.json`.
    - *Project*: files → `<project>/.claude/statuslines/thoridor/`, config → `<project>/.claude/settings.json` (committable, applies to teammates too). `<project>` is the user's own project — the directory they were working in when they asked — **never** a fresh clone of this repo; the clone is only the installation source and is disposable afterwards.
 2. **Profile** — `magni` (model / context / location — recommended default) or `eli-magi` (model / location / context).
-3. **Glyphs** — first print these two exact test lines to the user:
-
-   ```
-   Nerd icons:    [  ]  ← lightning, folder, branch
-   Unicode icons: [ϟ ⌂ ⎇]  ← the fallback set (works in any font)
-   ```
-
-   Then ask which line renders correctly **on the user's screen**. You cannot judge this yourself: rendering is decided by the terminal font on the user's display, and your own captured tool output proves nothing — a `printf`/`echo` result echoed back to you often shows raw codepoints or mojibake even when the icons render perfectly. Never infer from tool output, never default to `unicode` "to be safe"; `nerd` is the default. Nerd icons visible → `nerd` (recommended). Nerd line empty/boxes → offer BOTH options: (a) `unicode` glyphs, working right now with no install, or (b) install a Nerd Font — follow the **NERD FONT INSTALL** section below — then use `nerd`. Font install is optional — never a requirement.
+3. **Glyphs** — decided by the `nerd_fonts` detection from Step 1, not by a visual test. Never print glyph test characters into the chat and ask what renders: the nerd icons are private-use codepoints that usually come out blank in chat, so the test misleads the user into thinking the font is missing. (Your own captured tool output can't prove rendering either.)
+   - `nerd_fonts.installed: true` → use `nerd` (the default) without asking. Tell the user which font was detected and that their terminal profile must actually be set to it; if the statusline later shows boxes, one command switches: `setup.py set-glyphs --scope <scope> --glyphs unicode`.
+   - `nerd_fonts.installed: false` → ask: (a) `unicode` glyphs (ϟ ⌂ ⎇ — works in any font, no install), or (b) install a Nerd Font — follow **NERD FONT INSTALL** below — then use `nerd`. Font install is optional — never a requirement.
 
 If not inside a project directory, skip question 1 and install user-wide.
 
@@ -102,7 +100,7 @@ python3 "<skill-dir>/scripts/setup.py" install --scope user --profile magni --gl
 # or: ... install --scope project --project-dir "<project>" --profile eli-magi --glyphs unicode
 ```
 
-One command does everything: copies the files, merges settings.json (statusLine + the five animation hooks), and verifies by piping a sample payload through the exact configured command. Report the JSON result; on `ok: true` tell the user to restart Claude Code (or start a new session) and how to switch profiles later. On `ok: false`, fix what the `error` says and rerun.
+One command does everything: copies the files, merges settings.json (statusLine + the five animation hooks), and verifies by piping a sample payload through the exact configured command. Any command that edits an existing settings.json first copies it to `settings.json.bak-<timestamp>` and lists the copies under `settings_backups` in its JSON — mention that safety net to the user. Report the JSON result; on `ok: true` tell the user to restart Claude Code (or start a new session) and how to switch profiles later. On `ok: false`, fix what the `error` says and rerun.
 
 The manual steps below describe what the script does — use them only if the script itself cannot run.
 
@@ -170,7 +168,7 @@ Then the crucial step users forget — **select the font in the terminal profile
 - GNOME Terminal / Konsole / kitty / Ghostty: the profile's font setting or config file.
 - VS Code integrated terminal: setting `terminal.integrated.fontFamily` = `"JetBrainsMono Nerd Font"`.
 
-New font usually needs a fresh terminal window. Finish by re-running the icon test line from Step 2; when icons render, set glyphs to `nerd` (`setup.py set-glyphs --scope <scope> --glyphs nerd`).
+New font usually needs a fresh terminal window. Finish by re-running `setup.py check` — once `nerd_fonts.installed` is true and the user has selected the font in the terminal profile, set glyphs to `nerd` (`setup.py set-glyphs --scope <scope> --glyphs nerd`) and let the statusline itself be the visual confirmation.
 
 ## SWITCH PROFILE / TURN OFF
 
