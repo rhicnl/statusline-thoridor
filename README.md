@@ -4,11 +4,7 @@ A three-row animated statusline for [Claude Code](https://claude.com/claude-code
 
 > ⚡ The guide below walks through the Claude Code version; Pi users jump to [Pi version](#pi-version).
 
-```
- anthropic/claude-opus-5  xhigh
- ϟϟϟϟϟϟϟϟϟϟϟ··············· 42% (84k/200k)                                $1.23
-  \~/dev/my-project ·  main · 3 changed · PR#42
-```
+[![Thoridor statusline in action — thunder gauge animating while Claude works](media/statusline-thoridor-claude.gif)](media/statusline-thoridor-claude.mp4)
 
 - **Model row** (blue) — provider/model and thinking effort.
 - **Context row** (yellow) — a 26-cell thunder gauge of context usage that *animates while Claude is working*, plus percentage, tokens, and session cost.
