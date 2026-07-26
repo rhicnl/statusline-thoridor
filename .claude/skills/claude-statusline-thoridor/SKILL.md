@@ -52,11 +52,23 @@ Read the JSON it prints: `ok: true` means done (install includes a `verify` bloc
 
 ## INSTALL
 
+### Step 0 — Python bootstrap
+
+The helper script itself runs on Python, so check for it with a plain shell command **before** anything else: `python3 --version` (Linux/macOS) or `python --version` (Windows; beware the Windows Store stub that opens the Store instead of running — `python -c "print(1)"` proves it's real).
+
+If Python ≥ 3.10 is missing, don't just stop — help the user install it, then re-check:
+
+- **Windows**: `winget install Python.Python.3.12` (or the installer from python.org — have them tick "Add python.exe to PATH"). New PATH needs a new terminal.
+- **macOS**: `brew install python3` if Homebrew exists; otherwise `xcode-select --install` (ships python3) or the python.org installer.
+- **Linux**: `sudo apt install python3` / `sudo dnf install python3` / `sudo pacman -S python` per distro.
+
+Offer to run the command for them where possible; `sudo`/interactive installers they may need to run themselves. Only proceed to Step 1 once `python3 --version` (or `python --version`) reports ≥ 3.10.
+
 ### Step 1 — Preflight
 
 Run `setup.py check` (add `--project-dir` when inside a project) and report its JSON to the user in plain words:
 
-- `python_ok: false` → Python ≥ 3.10 is required; stop and help them install it.
+- `python_ok: false` → the found Python is older than 3.10; go back to Step 0 and help them install a current one.
 - `git: false` → row 2 will show no branch; mention it, don't block.
 - A scope with `statusline_configured: true` but `statusline_is_thoridor: false` → an unrelated statusline exists there; show its command and confirm before replacing (then pass `--force` to install). A project-level `statusLine` overrides the user-level one.
 - A scope with `installed: true` → offer an in-place update instead of a fresh install.

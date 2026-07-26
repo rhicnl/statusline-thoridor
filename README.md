@@ -63,7 +63,7 @@ Later you can also say things like *"switch thoridor to eli-magi"*, *"turn the t
 
 > If you are an AI coding agent (Claude Code or similar) asked to install this statusline and the skill above is not available, follow these steps exactly.
 
-1. **Preflight.** Detect the OS. Confirm Python ≥ 3.10 exists (`python3` on Linux/macOS, `python` on Windows — use that command in every step below). Confirm whether `~/.claude/settings.json` (or the project's `.claude/settings.json`) already has a `statusLine` entry; if so, tell the user what it is and get their OK to replace it.
+1. **Preflight.** Detect the OS. Confirm Python ≥ 3.10 exists (`python3` on Linux/macOS, `python` on Windows — use that command in every step below; on Windows beware the Store stub, prove it with `python -c "print(1)"`). If Python is missing, help the user install it first (`winget install Python.Python.3.12` / `brew install python3` / `sudo apt install python3`) rather than stopping. Confirm whether `~/.claude/settings.json` (or the project's `.claude/settings.json`) already has a `statusLine` entry; if so, tell the user what it is and get their OK to replace it.
 
 2. **Ask the user** (a) user-wide or project install, and (b) profile `magni` or `eli-magi` (the third profile, `off`, hides the statusline — offer it only when the user asks to disable Thoridor without uninstalling).
 
