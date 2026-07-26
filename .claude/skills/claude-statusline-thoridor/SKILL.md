@@ -78,7 +78,7 @@ Also check the terminal: truecolor is required (Windows Terminal, iTerm2, kitty,
 
 ### Step 2 — Ask the user
 
-Use AskUserQuestion with two questions:
+These are real questions for the user — never answer them yourself or silently pick "safe" values, and **do not run the installer until they are answered** (if the user pre-answered some in their request, ask only the rest). Use AskUserQuestion with three questions:
 
 1. **Scope** — "Install for your user (all projects) or just this project?"
    - *User (recommended)*: files → `~/.claude/statuslines/thoridor/`, config → `~/.claude/settings.json`.
@@ -91,7 +91,7 @@ Use AskUserQuestion with two questions:
    Unicode icons: [ϟ ⌂ ⎇]  ← the fallback set (works in any font)
    ```
 
-   Then ask which line renders correctly. Nerd icons visible → `nerd` (recommended). Nerd line empty/boxes → offer BOTH options: (a) `unicode` glyphs, working right now with no install, or (b) install a Nerd Font — follow the **NERD FONT INSTALL** section below — then use `nerd`. Font install is optional — never a requirement.
+   Then ask which line renders correctly **on the user's screen**. You cannot judge this yourself: rendering is decided by the terminal font on the user's display, and your own captured tool output proves nothing — a `printf`/`echo` result echoed back to you often shows raw codepoints or mojibake even when the icons render perfectly. Never infer from tool output, never default to `unicode` "to be safe"; `nerd` is the default. Nerd icons visible → `nerd` (recommended). Nerd line empty/boxes → offer BOTH options: (a) `unicode` glyphs, working right now with no install, or (b) install a Nerd Font — follow the **NERD FONT INSTALL** section below — then use `nerd`. Font install is optional — never a requirement.
 
 If not inside a project directory, skip question 1 and install user-wide.
 
