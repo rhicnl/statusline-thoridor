@@ -220,7 +220,7 @@ function cmdInstall(args) {
   // visible Pi config dir; a missing file is seeded from the settings template,
   // which explicitly enables the extension.
   let settingsCreated = false;
-  if (!fs.existsSync(settingsPath)) {
+  if (!fs.existsSync(settingsPath) || Object.keys(settings).length === 0) {
     const templateFile = path.join(SKILL_DIR, "templates", "settings.template.json");
     const seed = fs.existsSync(templateFile) ? JSON.parse(fs.readFileSync(templateFile, "utf8")) : settings;
     saveSettings(settingsPath, seed);
