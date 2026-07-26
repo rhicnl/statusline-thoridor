@@ -84,12 +84,12 @@ Also check the terminal: truecolor is required (Windows Terminal, iTerm2, kitty,
 These are real questions for the user — never answer them yourself or silently pick "safe" values, and **do not run the installer until they are answered** (if the user pre-answered some in their request, ask only the rest). Use AskUserQuestion:
 
 1. **Scope** — "Install for your user (all projects) or just this project?"
-   - *User (recommended)*: files → `~/.claude/statuslines/thoridor/`, config → `~/.claude/settings.json`.
+   - *User (recommended — list it first)*: files → `~/.claude/statuslines/thoridor/`, config → `~/.claude/settings.json`.
    - *Project*: files → `<project>/.claude/statuslines/thoridor/`, config → `<project>/.claude/settings.json` (committable, applies to teammates too). `<project>` is the user's own project — the directory they were working in when they asked — **never** a fresh clone of this repo; the clone is only the installation source and is disposable afterwards.
-2. **Profile** — `magni` (model / context / location — recommended default) or `eli-magi` (model / location / context).
+2. **Profile** — `eli-magi` (model / location / context — recommended, list it first) or `magni` (model / context / location).
 3. **Glyphs** — decided by the `nerd_fonts` detection from Step 1, not by a visual test. Never print glyph test characters into the chat and ask what renders: the nerd icons are private-use codepoints that usually come out blank in chat, so the test misleads the user into thinking the font is missing. (Your own captured tool output can't prove rendering either.)
    - `nerd_fonts.installed: true` → use `nerd` (the default) without asking. Tell the user which font was detected and that their terminal profile must actually be set to it; if the statusline later shows boxes, one command switches: `setup.py set-glyphs --scope <scope> --glyphs unicode`.
-   - `nerd_fonts.installed: false` → ask: (a) `unicode` glyphs (ϟ ⌂ ⎇ — works in any font, no install), or (b) install a Nerd Font — follow **NERD FONT INSTALL** below — then use `nerd`. Font install is optional — never a requirement.
+   - `nerd_fonts.installed: false` → ask, recommending the Nerd Font: (a) *install a Nerd Font (recommended, list it first)* — follow **NERD FONT INSTALL** below — then use `nerd`, or (b) `unicode` glyphs (ϟ ⌂ ⎇ — works in any font, no install). The font install is still the user's choice — never install one without their yes.
 
 If not inside a project directory, skip question 1 and install user-wide.
 
@@ -100,7 +100,7 @@ python3 "<skill-dir>/scripts/setup.py" install --scope user --profile magni --gl
 # or: ... install --scope project --project-dir "<project>" --profile eli-magi --glyphs unicode
 ```
 
-One command does everything: copies the files, merges settings.json (statusLine + the five animation hooks), and verifies by piping a sample payload through the exact configured command. Any command that edits an existing settings.json first copies it to `settings.json.bak-<timestamp>` and lists the copies under `settings_backups` in its JSON — mention that safety net to the user. Report the JSON result; on `ok: true` tell the user to restart Claude Code (or start a new session) and how to switch profiles later. On `ok: false`, fix what the `error` says and rerun.
+One command does everything: copies the files, merges settings.json (statusLine + the five animation hooks), and verifies by piping a sample payload through the exact configured command. Any command that edits an existing settings.json first copies it to `settings.json.bak-<timestamp>` and lists the copies under `settings_backups` in its JSON — mention that safety net to the user. Report the JSON result; on `ok: true` tell the user to **restart the Claude Code CLI** (exit and relaunch — `/clear` does NOT reload the statusline config) and how to switch profiles later. On `ok: false`, fix what the `error` says and rerun.
 
 The manual steps below describe what the script does — use them only if the script itself cannot run.
 
@@ -151,7 +151,7 @@ Pipe a sample payload through the exact command you configured, e.g.:
 echo '{"model":{"id":"claude-opus-5"},"workspace":{"current_dir":"'"$PWD"'"},"context_window":{"used_percentage":42,"context_window_size":200000,"current_usage":{"total":84000}},"cost":{"total_cost_usd":1.23}}' | <configured command>
 ```
 
-Expect three colored rows and exit code 0. Then tell the user to restart Claude Code (or start a new session) to see it live, and how to switch profiles later.
+Expect three colored rows and exit code 0. Then tell the user to **restart the Claude Code CLI** (exit and relaunch — `/clear` does NOT reload it) to see it live, and how to switch profiles later.
 
 ## NERD FONT INSTALL (when the user opts for the nicer icons)
 

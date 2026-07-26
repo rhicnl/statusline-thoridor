@@ -129,6 +129,12 @@ export function installTokenInfo(pi: ExtensionAPI) {
   });
 
   pi.on("turn_end", (_event, ctx) => refresh(ctx));
+  // agent_end fires whenever the agent loop stops (including aborts); settled
+  // can lag or be skipped, and a stuck true leaves the gauge animating forever.
+  pi.on("agent_end", (_event, ctx) => {
+    state = { ...state, generating: false };
+    refresh(ctx);
+  });
   pi.on("agent_settled", (_event, ctx) => {
     state = { ...state, generating: false };
     refresh(ctx);

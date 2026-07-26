@@ -28,7 +28,10 @@ const TEMPLATE_DIR = path.join(SKILL_DIR, "templates", "statusline-thoridor");
 const EXT_NAME = "statusline-thoridor";
 const EXCLUDE_ENTRY = `-extensions/${EXT_NAME}`;
 
+const settingsBackups = [];
+
 function out(result, code = result.ok ? 0 : 1) {
+  if (settingsBackups.length > 0) result.settings_backups = settingsBackups;
   console.log(JSON.stringify(result, null, 2));
   process.exit(code);
 }
@@ -74,7 +77,18 @@ function loadSettings(file) {
   return data;
 }
 
+// Failsafe: copy an existing settings.json aside before the first write to it.
+function backupSettings(file) {
+  if (!fs.existsSync(file) || settingsBackups.some((b) => b.startsWith(`${file}.bak-`))) return;
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  let backup = `${file}.bak-${stamp}`;
+  for (let counter = 1; fs.existsSync(backup); counter++) backup = `${file}.bak-${stamp}-${counter}`;
+  fs.copyFileSync(file, backup);
+  settingsBackups.push(backup);
+}
+
 function saveSettings(file, data) {
+  backupSettings(file);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const tmp = `${file}.${process.pid}.tmp`;
   fs.writeFileSync(tmp, JSON.stringify(data, null, 2) + "\n");
