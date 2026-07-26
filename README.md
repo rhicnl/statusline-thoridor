@@ -1,4 +1,4 @@
-# statusline-thoridor
+# claude-statusline-thoridor
 
 A three-row animated statusline for [Claude Code](https://claude.com/claude-code). This repo is all you need — a README (this file) and the statusline packaged as a Claude Code **skill** that installs and configures itself.
 
@@ -33,17 +33,17 @@ Copy the skill into your Claude Code skills folder:
 **Linux / macOS**
 
 ```bash
-git clone https://github.com/rhicnl/statusline-thoridor
+git clone https://github.com/rhicnl/claude-statusline-thoridor
 mkdir -p ~/.claude/skills
-cp -r statusline-thoridor/.claude/skills/statusline-thoridor ~/.claude/skills/
+cp -r claude-statusline-thoridor/.claude/skills/statusline-thoridor ~/.claude/skills/
 ```
 
 **Windows (PowerShell)**
 
 ```powershell
-git clone https://github.com/rhicnl/statusline-thoridor
+git clone https://github.com/rhicnl/claude-statusline-thoridor
 New-Item -ItemType Directory -Force "$HOME\.claude\skills" | Out-Null
-Copy-Item -Recurse statusline-thoridor\.claude\skills\statusline-thoridor "$HOME\.claude\skills\"
+Copy-Item -Recurse claude-statusline-thoridor\.claude\skills\statusline-thoridor "$HOME\.claude\skills\"
 ```
 
 Then start (or restart) Claude Code and type:
