@@ -158,6 +158,8 @@ def run_verify(settings_path: Path) -> dict:
             input=SAMPLE_PAYLOAD,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=15,
         )
     except (subprocess.TimeoutExpired, OSError) as error:

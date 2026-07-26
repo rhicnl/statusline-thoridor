@@ -211,6 +211,8 @@ def run_git(directory: str, *args: str) -> str:
             ["git", "-C", directory, *args],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=3,
         )
         return result.stdout.strip() if result.returncode == 0 else ""
@@ -442,6 +444,7 @@ def main() -> None:
         return
     try:
         sys.stdout.reconfigure(encoding="utf-8")
+        sys.stdin.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
     profile = resolve_profile(sys.argv[1:])
