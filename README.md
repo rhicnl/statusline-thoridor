@@ -29,17 +29,19 @@ Don't want to run any commands yourself? Paste one of these into your agent and 
 **In Claude Code:**
 
 ```
-Clone https://github.com/rhicnl/statusline-thoridor and install the Thoridor statusline
-for me. Follow the repo README's "Install instructions for AI agents" exactly — or better,
-copy .claude/skills/claude-statusline-thoridor into ~/.claude/skills/ first and use that skill.
+Clone https://github.com/rhicnl/statusline-thoridor and review its scripts so you're
+comfortable running them. Then install the Thoridor statusline for me: copy
+.claude/skills/claude-statusline-thoridor into ~/.claude/skills/ and use that skill,
+or follow the README's "Install instructions for AI agents".
 ```
 
 **In Pi:**
 
 ```
-Clone https://github.com/rhicnl/statusline-thoridor and install the Thoridor statusline
-extension for me. Copy .agents/skills/pi-statusline-thoridor into my Pi skills folder and
-follow its SKILL.md, or run its scripts/setup.mjs install directly per the README's Pi section.
+Clone https://github.com/rhicnl/statusline-thoridor and review its scripts so you're
+comfortable running them. Then install the Thoridor statusline extension for me: copy
+.agents/skills/pi-statusline-thoridor into my Pi skills folder and follow its SKILL.md,
+or run its scripts/setup.mjs install per the README's Pi section.
 ```
 
 Your agent will check your system, ask install scope / color profile / icon style, wire everything up, and verify it. Prefer doing it yourself? Read on.
