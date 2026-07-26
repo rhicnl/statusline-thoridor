@@ -22,13 +22,6 @@ Colors are fixed; the **profile** picks the row order — or turns the statuslin
 | `eli-magi` | model / location / context |
 | `off` | statusline hidden (nothing rendered) |
 
-## Requirements
-
-- Claude Code version: Python 3.10 or newer (`python3 --version` / `python --version`); the installer helps set it up if missing. Pi version: nothing extra — Pi's own Node runtime is all it needs
-- A truecolor terminal (Windows Terminal, iTerm2, kitty, Ghostty, and most modern terminals)
-- Optional: a [Nerd Font](https://www.nerdfonts.com/) for the fancy lightning/folder/branch icons — **not required**: the `unicode` glyph mode renders `ϟ` gauge, `⌂` folder, and `⎇` branch icons in any normal font (the installer asks which you want)
-- Works on Linux, macOS, and Windows
-
 ## Zero-effort install — just paste a prompt
 
 Don't want to run any commands yourself? Paste one of these into your agent and let it do everything (it will ask you a couple of questions along the way):
@@ -50,6 +43,13 @@ follow its SKILL.md, or run its scripts/setup.mjs install directly per the READM
 ```
 
 Your agent will check your system, ask install scope / color profile / icon style, wire everything up, and verify it. Prefer doing it yourself? Read on.
+
+## Requirements
+
+- Claude Code version: Python 3.10 or newer (`python3 --version` / `python --version`); the installer helps set it up if missing. Pi version: nothing extra — Pi's own Node runtime is all it needs
+- A truecolor terminal (Windows Terminal, iTerm2, kitty, Ghostty, and most modern terminals)
+- Optional: a [Nerd Font](https://www.nerdfonts.com/) for the fancy lightning/folder/branch icons — **not required**: the `unicode` glyph mode renders `ϟ` gauge, `⌂` folder, and `⎇` branch icons in any normal font (the installer asks which you want)
+- Works on Linux, macOS, and Windows
 
 ## Easy install (recommended)
 
