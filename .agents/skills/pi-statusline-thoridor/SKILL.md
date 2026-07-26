@@ -19,6 +19,24 @@ Row colors are fixed; the **profile** (via the `THORIDOR_PROFILE` env var) picks
 | `eli-magi` | model / location / context |
 | `off` | extension leaves Pi's stock footer untouched |
 
+## Helper script
+
+`scripts/setup.mjs` is **the deterministic way to change state — use it instead of copying files or editing Pi settings by hand.** It merges settings atomically, is idempotent, prints a JSON result, and exits nonzero on failure. Requires only Node (which Pi itself runs on):
+
+```bash
+node "<skill-dir>/scripts/setup.mjs" <command> --scope global|project [--project-dir DIR]
+```
+
+| Command | Does |
+|---|---|
+| `check` | Read-only preflight: template present, per-scope installed/disabled state (add `--project-dir` to include project scope) |
+| `install` | Copy the extension into the scope's Pi extensions dir (also clears a stale disable) |
+| `disable` | Add the `extensions` exclude to the scope's Pi settings.json — the config-level off switch |
+| `enable` | Remove that exclude |
+| `uninstall` | Delete the extension dir and remove the exclude |
+
+After any change: `/reload` in a running Pi (or restart it), then verify — footer present and `/thoridor-statusline` registered (or absent, after disable/uninstall). Read the printed JSON: `ok: false` carries an `error` saying what to fix.
+
 ## Template contents (`templates/statusline-thoridor/`)
 
 - `index.ts` — extension entry point; wires up the four installers below.
@@ -41,11 +59,9 @@ The extension is self-contained: it imports only `@earendil-works/pi-coding-agen
 
 ## INSTALL
 
-1. **Preflight.** Confirm you are dealing with Pi (`~/.pi/` exists or the user says so). Check for an existing install at `~/.pi/agent/extensions/statusline-thoridor/` or `<project>/.pi/extensions/statusline-thoridor/` — if present, offer an in-place update. Warn (don't block) that the glyphs need a truecolor terminal and a Nerd Font. Note whether `gh` is installed/authenticated — without it the PR badge simply won't show.
-2. **Ask the user**: global (all projects) or this project only?
-   - *Global*: copy the template directory to `~/.pi/agent/extensions/statusline-thoridor/`.
-   - *Project*: copy to `<project>/.pi/extensions/statusline-thoridor/` (loads only after the project is trusted in Pi; committable so teammates get it too).
-3. **Copy** `templates/statusline-thoridor/` (the whole directory: `index.ts` + `src/`) to the chosen location.
+1. **Preflight.** Run `setup.mjs check` (with `--project-dir` when in a project) and report the JSON plainly. An `installed: true` scope → offer in-place update (install overwrites cleanly); `disabled: true` → installing re-enables it. Warn (don't block) that the glyphs need a truecolor terminal and a Nerd Font. Note whether `gh` is installed/authenticated — without it the PR badge simply won't show.
+2. **Ask the user**: global (all projects) or this project only? (Project installs live in `<project>/.pi/extensions/`, load only after the project is trusted in Pi, and are committable so teammates get it too.)
+3. **Run** `setup.mjs install --scope global` (or `--scope project --project-dir "<project>"`).
 4. **Profile** (optional): default is `magni` with no configuration. For `eli-magi` or `off`, the user sets `THORIDOR_PROFILE` in the environment Pi starts from (e.g. `export THORIDOR_PROFILE=eli-magi` in their shell rc).
 5. **Activate**: in a running Pi session, `/reload` picks the extension up; otherwise it loads on the next Pi start. Verify: three colored rows appear as the footer, and `/thoridor-statusline` responds with "Thoridor statusline refreshed".
 
@@ -55,23 +71,24 @@ Set `THORIDOR_PROFILE` to `magni` or `eli-magi` in the environment Pi launches f
 
 ## TURN OFF (disable in Pi config)
 
-When the user asks to turn Thoridor off, disable the extension in the Pi settings for the scope they name — ask global or project if unclear:
+When the user asks to turn Thoridor off, disable it in Pi's config for the scope they name — ask global or project if unclear:
 
-- **Global**: in `~/.pi/agent/settings.json`, add a force-exclude for the extension to the `extensions` array (paths resolve relative to `~/.pi/agent`):
+```bash
+node "<skill-dir>/scripts/setup.mjs" disable --scope global
+node "<skill-dir>/scripts/setup.mjs" disable --scope project --project-dir "<project>"
+```
 
-  ```json
-  { "extensions": ["-extensions/statusline-thoridor"] }
-  ```
-
-- **Project**: same entry in `<project>/.pi/settings.json` (paths resolve relative to `.pi`, so the same `-extensions/statusline-thoridor` value excludes the project copy).
-
-Merge into the existing JSON — never drop other keys or existing `extensions` entries. Then `/reload` in a running Pi (or restart) and verify the footer reverted to Pi's stock one and `/thoridor-statusline` is no longer registered. If the exclude doesn't take effect on this Pi version, fall back to moving the extension directory out of the extensions folder (e.g. to `statusline-thoridor.disabled/`). Re-enable by removing the exclude entry (or moving the directory back) and reloading.
+This adds a `-extensions/statusline-thoridor` force-exclude to that scope's `extensions` array in Pi's settings.json (merge-safe, idempotent). Then `/reload` in a running Pi (or restart) and verify the footer reverted to Pi's stock one and `/thoridor-statusline` is no longer registered. If the exclude doesn't take effect on this Pi version, fall back to moving the extension directory out of the extensions folder (e.g. to `statusline-thoridor.disabled/`). Re-enable with `setup.mjs enable --scope ...` (or move the directory back) and reload.
 
 Quick alternative without touching config: launch with `THORIDOR_PROFILE=off` — the extension stays loaded but leaves Pi's stock footer and working indicator untouched.
 
 ## UNINSTALL
 
-Delete the extension directory (`.../extensions/statusline-thoridor/`), then `/reload` or restart Pi. Nothing else is written anywhere — no settings to clean up.
+```bash
+node "<skill-dir>/scripts/setup.mjs" uninstall --scope global   # or --scope project --project-dir "<project>"
+```
+
+Deletes the extension directory and removes any disable entry from that scope's settings, then `/reload` or restart Pi.
 
 ## HELP & TROUBLESHOOTING
 

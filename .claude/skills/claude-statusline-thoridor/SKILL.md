@@ -19,10 +19,29 @@ Row colors are fixed — model row blue (`#3333ff`/`#0000ff`), folder/branch row
 | `eli-magi` | model / folder & branch / context gauge + cost |
 | `off` | renders nothing — statusline hidden |
 
-Files shipped in `assets/` next to this SKILL.md:
+Files shipped next to this SKILL.md:
 
-- `thoridor.py` — the statusline renderer (reads statusline JSON on stdin; `--profile` flag; `--help` for full usage).
-- `working_state.py` — lifecycle-hook helper that tracks whether Claude is working, so the gauge animates only during generation.
+- `assets/thoridor.py` — the statusline renderer (reads statusline JSON on stdin; `--profile` flag; `--help` for full usage).
+- `assets/working_state.py` — lifecycle-hook helper that tracks whether Claude is working, so the gauge animates only during generation.
+- `scripts/setup.py` — **the deterministic installer. Use it for every state change; never hand-edit settings.json.** It merges settings atomically, is idempotent, prints a JSON result, and exits nonzero on failure.
+
+## Helper script
+
+Run with the platform python (`python3` on Linux/macOS, `python` on Windows), from any cwd:
+
+```bash
+python3 "<skill-dir>/scripts/setup.py" <command> [flags]
+```
+
+| Command | Flags | Does |
+|---|---|---|
+| `check` | `[--project-dir DIR]` | Read-only preflight: OS, python, git, existing installs/config per scope |
+| `install` | `--scope user\|project [--profile magni\|eli-magi] [--project-dir DIR] [--force]` | Copy assets, merge statusLine + 5 hooks, then verify — all in one |
+| `set-profile` | `--scope ... --profile magni\|eli-magi\|off` | Change profile / turn off in that scope's settings.json |
+| `uninstall` | `--scope ... [--project-dir DIR]` | Remove statusLine, hooks, and files for that scope |
+| `verify` | `--scope ... [--project-dir DIR]` | Pipe a sample payload through the configured command |
+
+Read the JSON it prints: `ok: true` means done (install includes a `verify` block); `ok: false` includes an `error` explaining what to fix. `install` refuses to overwrite a non-thoridor statusLine unless `--force` — surface that to the user and get their OK first.
 
 ## Mode selection
 
@@ -35,14 +54,14 @@ Files shipped in `assets/` next to this SKILL.md:
 
 ### Step 1 — Preflight
 
-Run these checks and report results before changing anything:
+Run `setup.py check` (add `--project-dir` when inside a project) and report its JSON to the user in plain words:
 
-1. **OS**: detect Linux / macOS / Windows (`platform.system()` via python, or `uname` / `$env:OS`). This decides the python command used in hooks: `python3` on Linux/macOS, `python` on Windows.
-2. **Python**: confirm Python ≥ 3.10 is available (`python3 --version` or `python --version`). Always configure the statusline with **direct python**, not `uv run` — the script has no third-party dependencies and skipping uv saves ~40 ms on every refresh (the statusline re-runs about once per second).
-3. **Git** (optional): if missing, row 2 simply shows no branch — mention it, don't block.
-4. **Existing statusline**: read both `~/.claude/settings.json` and, if inside a project, `<project>/.claude/settings.json`. If a `statusLine` entry already exists in either, tell the user what is configured where and confirm before replacing it. Remember: a project-level `statusLine` overrides the user-level one.
-5. **Existing thoridor install**: look for `~/.claude/statuslines/thoridor/` and `<project>/.claude/statuslines/thoridor/`. If found, offer to update in place instead of installing fresh.
-6. **Terminal**: warn (don't block) that the gauge needs a truecolor terminal and a Nerd Font (glyphs U+F0E7, U+F07B, U+E0A0). Windows Terminal, iTerm2, kitty, etc. are fine; legacy cmd.exe is not.
+- `python_ok: false` → Python ≥ 3.10 is required; stop and help them install it.
+- `git: false` → row 2 will show no branch; mention it, don't block.
+- A scope with `statusline_configured: true` but `statusline_is_thoridor: false` → an unrelated statusline exists there; show its command and confirm before replacing (then pass `--force` to install). A project-level `statusLine` overrides the user-level one.
+- A scope with `installed: true` → offer an in-place update instead of a fresh install.
+
+Also warn (don't block) that the gauge needs a truecolor terminal and a Nerd Font (glyphs U+F0E7, U+F07B, U+E0A0). Windows Terminal, iTerm2, kitty, etc. are fine; legacy cmd.exe is not.
 
 ### Step 2 — Ask the user
 
@@ -55,11 +74,22 @@ Use AskUserQuestion with two questions:
 
 If not inside a project directory, skip question 1 and install user-wide.
 
-### Step 3 — Copy files
+### Step 3 — Run the installer
+
+```bash
+python3 "<skill-dir>/scripts/setup.py" install --scope user --profile magni
+# or: ... install --scope project --project-dir "<project>" --profile eli-magi
+```
+
+One command does everything: copies the files, merges settings.json (statusLine + the five animation hooks), and verifies by piping a sample payload through the exact configured command. Report the JSON result; on `ok: true` tell the user to restart Claude Code (or start a new session) and how to switch profiles later. On `ok: false`, fix what the `error` says and rerun.
+
+The manual steps below describe what the script does — use them only if the script itself cannot run.
+
+### Manual fallback — Copy files
 
 Copy `assets/thoridor.py` and `assets/working_state.py` into the chosen install dir (create it first). Never copy `.state/` or `__pycache__/` if updating an old install.
 
-### Step 4 — Wire settings.json
+### Manual fallback — Wire settings.json
 
 **Merge, never overwrite** the target settings.json (preserve all existing keys; create the file with `{}` semantics if absent).
 
@@ -94,7 +124,7 @@ These hooks only toggle a per-session flag in `<INSTALL_DIR>/.state/` so the gau
 
 Performance notes baked into the script (no action needed): git branch/status results are cached per directory in `<INSTALL_DIR>/.state/` with a 4-second TTL, written atomically; while Claude is generating, stale git details are reused for up to 5 minutes so the animation never pays for git subprocesses.
 
-### Step 5 — Verify
+### Manual fallback — Verify
 
 Pipe a sample payload through the exact command you configured, e.g.:
 
@@ -106,17 +136,24 @@ Expect three colored rows and exit code 0. Then tell the user to restart Claude 
 
 ## SWITCH PROFILE / TURN OFF
 
-Both are config edits to the settings.json of the scope the user names — global (`~/.claude/settings.json`) or project (`<project>/.claude/settings.json`); ask if unclear which they mean.
+Both are one script call against the scope the user names (ask if unclear which settings.json they mean):
 
-- **Switch profile**: edit the `--profile` value in that file's `statusLine.command` (`magni` / `eli-magi`).
-- **Turn off**: set `--profile off` in that file's `statusLine.command` — the script renders nothing, hiding the statusline while staying installed. If the user wants a *project* switched off while their global install stays on, and the project has no `statusLine` entry yet, add one there with `--profile off` (project settings override user settings). Re-enable by setting a real profile again (or removing the project override).
+```bash
+python3 "<skill-dir>/scripts/setup.py" set-profile --scope user --profile eli-magi
+python3 "<skill-dir>/scripts/setup.py" set-profile --scope user --profile off        # turn off
+python3 "<skill-dir>/scripts/setup.py" set-profile --scope project --project-dir "<project>" --profile off
+```
 
-Always merge — never touch other keys. The `THORIDOR_PROFILE` env var also works (the `--profile` flag wins), but prefer the config edit so the state is visible in settings.json.
+`off` makes the script render nothing — statusline hidden, install intact; a real profile brings it back. The project form works even when only a user-level install exists: it writes a project override entry pointing at the user install (project settings override user settings), so a single project can be off while the rest stay on. Changes apply on the next Claude Code session.
 
 ## UNINSTALL
 
-1. Remove the `statusLine` block and the five `working_state.py` hook entries from the settings.json that holds them (leave all other hooks/keys untouched).
-2. Delete the install dir (`.../statuslines/thoridor/`).
+```bash
+python3 "<skill-dir>/scripts/setup.py" uninstall --scope user
+# or: ... uninstall --scope project --project-dir "<project>"
+```
+
+Removes the `statusLine` entry, the five `working_state.py` hooks, and the install dir for that scope — nothing else is touched. The JSON result reports exactly what was removed.
 
 ## HELP & TROUBLESHOOTING
 
