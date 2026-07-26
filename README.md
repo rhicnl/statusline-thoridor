@@ -1,4 +1,4 @@
-# claude-statusline-thoridor
+# statusline-thoridor
 
 A three-row animated statusline for [Claude Code](https://claude.com/claude-code). This repo is all you need — a README (this file) and the statusline packaged as a Claude Code **skill** that installs and configures itself.
 
@@ -35,23 +35,23 @@ Copy the skill into your Claude Code skills folder:
 **Linux / macOS**
 
 ```bash
-git clone https://github.com/rhicnl/claude-statusline-thoridor
+git clone https://github.com/rhicnl/statusline-thoridor
 mkdir -p ~/.claude/skills
-cp -r claude-statusline-thoridor/.claude/skills/statusline-thoridor ~/.claude/skills/
+cp -r statusline-thoridor/.claude/skills/claude-statusline-thoridor ~/.claude/skills/
 ```
 
 **Windows (PowerShell)**
 
 ```powershell
-git clone https://github.com/rhicnl/claude-statusline-thoridor
+git clone https://github.com/rhicnl/statusline-thoridor
 New-Item -ItemType Directory -Force "$HOME\.claude\skills" | Out-Null
-Copy-Item -Recurse claude-statusline-thoridor\.claude\skills\statusline-thoridor "$HOME\.claude\skills\"
+Copy-Item -Recurse statusline-thoridor\.claude\skills\claude-statusline-thoridor "$HOME\.claude\skills\"
 ```
 
 Then start (or restart) Claude Code and type:
 
 ```
-/statusline-thoridor install
+/claude-statusline-thoridor install
 ```
 
 Claude checks your system, asks two questions (install for your user or just this project? which color profile?), wires everything up, and verifies it. Afterwards, restart Claude Code and enjoy the lightning. ⚡
@@ -66,7 +66,7 @@ Later you can also say things like *"switch thoridor to eli-magi"*, *"uninstall 
 
 2. **Ask the user** (a) user-wide or project install, and (b) profile `magni` or `eli-magi`.
 
-3. **Copy the two scripts** from this repo's `.claude/skills/statusline-thoridor/assets/` — `thoridor.py` and `working_state.py` — into the install directory, keeping them side by side:
+3. **Copy the two scripts** from this repo's `.claude/skills/claude-statusline-thoridor/assets/` — `thoridor.py` and `working_state.py` — into the install directory, keeping them side by side:
    - user-wide: `~/.claude/statuslines/thoridor/`
    - project: `<project>/.claude/statuslines/thoridor/`
 

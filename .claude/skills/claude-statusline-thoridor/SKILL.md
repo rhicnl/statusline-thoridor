@@ -1,5 +1,5 @@
 ---
-name: statusline-thoridor
+name: claude-statusline-thoridor
 description: Install, configure, or troubleshoot the Thoridor three-row animated statusline for Claude Code. Use when the user asks to install thoridor, set up the thoridor statusline, switch its color profile (magni / eli-magi), uninstall it, or asks how it works. Portable across Linux, macOS, and Windows; supports user-wide or per-project installation.
 ---
 
