@@ -1,0 +1,4 @@
+{
+  "extensions": ["+extensions/statusline-thoridor"],
+  "//statusline-thoridor": "row order + icons live in .pi/extensions/statusline-thoridor/thoridor.json — profile: 'magni' (model/context/location) | 'eli-magi' (model/location/context) | 'off', glyphs: 'nerd' | 'unicode'. Example: { \"profile\": \"eli-magi\", \"glyphs\": \"nerd\" }. Env overrides per launch: THORIDOR_PROFILE / THORIDOR_GLYPHS."
+}

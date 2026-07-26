@@ -216,11 +216,14 @@ function cmdInstall(args) {
     saveSettings(settingsPath, settings);
     reenabled = true;
   }
-  // Materialize the scope's settings.json (even empty) so the install is a
-  // complete, visible Pi config dir — Pi discovers the extension either way.
+  // Materialize the scope's settings.json so the install is a complete,
+  // visible Pi config dir; a missing file is seeded from the settings template,
+  // which explicitly enables the extension.
   let settingsCreated = false;
   if (!fs.existsSync(settingsPath)) {
-    saveSettings(settingsPath, settings);
+    const templateFile = path.join(SKILL_DIR, "templates", "settings.template.json");
+    const seed = fs.existsSync(templateFile) ? JSON.parse(fs.readFileSync(templateFile, "utf8")) : settings;
+    saveSettings(settingsPath, seed);
     settingsCreated = true;
   }
   // Always materialize the scope's config so the install is explicit on disk;
