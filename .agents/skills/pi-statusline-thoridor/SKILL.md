@@ -63,7 +63,14 @@ The extension is self-contained: it imports only `@earendil-works/pi-coding-agen
 1. **Preflight.** Run `setup.mjs check` (with `--project-dir` when in a project) and report the JSON plainly. An `installed: true` scope → offer in-place update (install overwrites cleanly); `disabled: true` → installing re-enables it. Warn (don't block) that the glyphs need a truecolor terminal and a Nerd Font. Note whether `gh` is installed/authenticated — without it the PR badge simply won't show.
 2. **Ask the user**: global (all projects) or this project only? (Project installs live in `<project>/.pi/extensions/`, load only after the project is trusted in Pi, and are committable so teammates get it too.)
 3. **Run** `setup.mjs install --scope global` (or `--scope project --project-dir "<project>"`).
-4. **Profile & glyphs** (optional): default is `magni` + `nerd` with no configuration. Ask the glyph question — print `Icon test: [  ]`; if the user sees boxes instead of icons, either set `--glyphs unicode` (works in any font, no install needed) or install a Nerd Font via the **NERD FONT INSTALL** section below (optional, never required). Persist choices with `setup.mjs config --scope ... --profile eli-magi --glyphs unicode`; the `THORIDOR_PROFILE` / `THORIDOR_GLYPHS` env vars override per launch.
+4. **Profile & glyphs** (optional): default is `magni` + `nerd` with no configuration. Ask the glyph question — print these two exact test lines to the user:
+
+   ```
+   Nerd icons:    [  ]  ← lightning, folder, branch
+   Unicode icons: [ϟ ⌂ ⎇]  ← the fallback set (works in any font)
+   ```
+
+   Then ask which line renders correctly. Nerd line empty/boxes → either set `--glyphs unicode` (works right now, no install) or install a Nerd Font via the **NERD FONT INSTALL** section below (optional, never required). Persist choices with `setup.mjs config --scope ... --profile eli-magi --glyphs unicode`; the `THORIDOR_PROFILE` / `THORIDOR_GLYPHS` env vars override per launch.
 5. **Activate**: in a running Pi session, `/reload` picks the extension up; otherwise it loads on the next Pi start. Verify: three colored rows appear as the footer, and `/thoridor-statusline` responds with "Thoridor statusline refreshed".
 
 ## NERD FONT INSTALL (when the user opts for the nicer icons)

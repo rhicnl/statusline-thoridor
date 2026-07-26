@@ -84,7 +84,14 @@ Use AskUserQuestion with two questions:
    - *User (recommended)*: files → `~/.claude/statuslines/thoridor/`, config → `~/.claude/settings.json`.
    - *Project*: files → `<project>/.claude/statuslines/thoridor/`, config → `<project>/.claude/settings.json` (committable, applies to teammates too).
 2. **Profile** — `magni` (model / context / location — recommended default) or `eli-magi` (model / location / context).
-3. **Glyphs** — first print this exact test line to the user: `Icon test: [  ] ← do these render as a lightning bolt, folder, and branch symbol?` Then ask: icons visible → `nerd` (recommended); boxes/blanks/question marks → offer BOTH options: (a) `unicode` glyphs, which work in any font right now (the gauge uses `ϟ`), or (b) install a Nerd Font — follow the **NERD FONT INSTALL** section below — then use `nerd`. Font install is optional — never a requirement.
+3. **Glyphs** — first print these two exact test lines to the user:
+
+   ```
+   Nerd icons:    [  ]  ← lightning, folder, branch
+   Unicode icons: [ϟ ⌂ ⎇]  ← the fallback set (works in any font)
+   ```
+
+   Then ask which line renders correctly. Nerd icons visible → `nerd` (recommended). Nerd line empty/boxes → offer BOTH options: (a) `unicode` glyphs, working right now with no install, or (b) install a Nerd Font — follow the **NERD FONT INSTALL** section below — then use `nerd`. Font install is optional — never a requirement.
 
 If not inside a project directory, skip question 1 and install user-wide.
 
