@@ -9,7 +9,7 @@ A portable, three-row animated statusline for [Claude Code](https://claude.com/c
 ```
 
 1. **Identity** — provider/model and thinking effort.
-2. **Location** — directory, git branch, changed-file count, and PR (separators in Rosé Pine gold).
+2. **Location** — directory, git branch, changed-file count, and PR.
 3. **Context** — a 26-cell thunder gauge of context usage that *animates while Claude is working*, plus percentage, tokens, and session cost.
 
 Two color profiles:
@@ -58,4 +58,4 @@ The context bar shows Claude Code's own numbers: raw usage over the model's full
 
 ## Credits
 
-A Claude Code port of the Thoridor statusline from [Pi](https://github.com/badlogic/pi-mono), colors from [Rosé Pine Moon](https://rosepinetheme.com/palette/) (see `assets/rose-pine-moon.md`).
+A Claude Code port of the Thoridor statusline from [Pi](https://github.com/badlogic/pi-mono).

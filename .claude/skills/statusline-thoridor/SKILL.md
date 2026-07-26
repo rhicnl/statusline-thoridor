@@ -8,7 +8,7 @@ description: Install, configure, or troubleshoot the Thoridor three-row animated
 Thoridor is a three-row statusline for Claude Code:
 
 1. **Identity** — `provider/model` and thinking effort.
-2. **Location** — directory, git branch, changed-file count, and PR (separators in Rosé Pine gold).
+2. **Location** — directory, git branch, changed-file count, and PR (separators in neutral gray).
 3. **Context** — a 26-cell animated "thunder gauge" of context usage, percentage, tokens, and session cost.
 
 Two color profiles:
@@ -22,7 +22,6 @@ Files shipped in `assets/` next to this SKILL.md:
 
 - `thoridor.py` — the statusline renderer (reads statusline JSON on stdin; `--profile` flag; `--help` for full usage).
 - `working_state.py` — lifecycle-hook helper that tracks whether Claude is working, so the gauge animates only during generation.
-- `rose-pine-moon.md` — palette reference (documentation only).
 
 ## Mode selection
 
@@ -57,7 +56,7 @@ If not inside a project directory, skip question 1 and install user-wide.
 
 ### Step 3 — Copy files
 
-Copy `assets/thoridor.py`, `assets/working_state.py`, and `assets/rose-pine-moon.md` into the chosen install dir (create it first). Never copy `.state/` or `__pycache__/` if updating an old install.
+Copy `assets/thoridor.py` and `assets/working_state.py` into the chosen install dir (create it first). Never copy `.state/` or `__pycache__/` if updating an old install.
 
 ### Step 4 — Wire settings.json
 

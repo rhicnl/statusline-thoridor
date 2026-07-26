@@ -66,14 +66,9 @@ Manual test:
   echo '{"model":{"id":"claude-opus-5"},"context_window":{"used_percentage":42,"context_window_size":200000,"current_usage":{"total":84000}}}' | python3 thoridor.py
 """
 
-# Rosé Pine Moon palette.
-LOVE = "\033[38;2;235;111;146m"
-GOLD = "\033[38;2;246;193;119m"
-FOAM = "\033[38;2;156;207;216m"
-IRIS = "\033[38;2;196;167;231m"
-ROSE = "\033[38;2;234;154;151m"
-MUTED = "\033[38;2;110;106;134m"
-SUBTLE = "\033[38;2;144;140;170m"
+ERROR_COLOR = "\033[38;2;255;0;0m"
+SEPARATOR_COLOR = "\033[38;2;128;128;128m"
+DIM_COLOR = "\033[38;2;110;110;110m"
 RESET = "\033[0m"
 
 BAR_WIDTH = 26
@@ -291,7 +286,7 @@ def get_thunder_strike_frame(cell_index: int, phase: int) -> dict[str, Any]:
 
 def render_thunder_strike_cell(cell_index: int, phase: int, fill_color: str) -> str:
     frame = get_thunder_strike_frame(cell_index, phase)
-    charged_color = mix_hex("#6e6a86", fill_color, float(frame["intensity"]))
+    charged_color = mix_hex("#6e6e6e", fill_color, float(frame["intensity"]))
     strike_color = mix_hex(charged_color, THUNDER_FLASH_COLOR, float(frame["flash"]))
     emphasis = frame["emphasis"]
     emphasis_start = "\033[1m" if emphasis == "bold" else "\033[2m" if emphasis == "dim" else ""
@@ -302,7 +297,7 @@ def render_thunder_strike_cell(cell_index: int, phase: int, fill_color: str) -> 
 def create_progress_bar(percentage: int, fill_color: str) -> str:
     filled = min(BAR_WIDTH, round((percentage / 100) * BAR_WIDTH))
     empty = BAR_WIDTH - filled
-    return f"{color(hex_ansi(fill_color), THUNDER_ICON * filled)}{color(SUBTLE, UNUSED_ICON * empty)}"
+    return f"{color(hex_ansi(fill_color), THUNDER_ICON * filled)}{color(DIM_COLOR, UNUSED_ICON * empty)}"
 
 
 def create_animated_progress_bar(percentage: int, fill_color: str, phase: int) -> str:
@@ -312,7 +307,7 @@ def create_animated_progress_bar(percentage: int, fill_color: str, phase: int) -
         render_thunder_strike_cell(cell_index, phase, fill_color)
         for cell_index in range(filled)
     )
-    return f"{used}{color(SUBTLE, UNUSED_ICON * (BAR_WIDTH - filled))}"
+    return f"{used}{color(DIM_COLOR, UNUSED_ICON * (BAR_WIDTH - filled))}"
 
 
 def format_pr(input_data: dict[str, Any]) -> str:
@@ -370,7 +365,7 @@ def generate_status_line(input_data: dict[str, Any], profile: dict[str, str]) ->
         pr = format_pr(input_data)
         if pr:
             git_text += f" · {pr}"
-        row2 += color(GOLD, " · ") + color(hex_ansi(profile["folder"]), git_text)
+        row2 += color(SEPARATOR_COLOR, " · ") + color(hex_ansi(profile["folder"]), git_text)
     row2 = truncate_to_width(row2, content_width)
 
     percentage, current_tokens, context_window = get_context_data(input_data)
@@ -412,7 +407,7 @@ def main() -> None:
         input_data = json.loads(input_text) if input_text.strip() else {}
         print(generate_status_line(input_data, profile))
     except Exception as error:
-        print(color(LOVE, f"Error: {error}"))
+        print(color(ERROR_COLOR, f"Error: {error}"))
         raise SystemExit(1) from error
 
 
