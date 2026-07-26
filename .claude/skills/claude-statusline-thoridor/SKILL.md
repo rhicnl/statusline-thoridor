@@ -36,8 +36,9 @@ python3 "<skill-dir>/scripts/setup.py" <command> [flags]
 | Command | Flags | Does |
 |---|---|---|
 | `check` | `[--project-dir DIR]` | Read-only preflight: OS, python, git, existing installs/config per scope |
-| `install` | `--scope user\|project [--profile magni\|eli-magi] [--project-dir DIR] [--force]` | Copy assets, merge statusLine + 5 hooks, then verify — all in one |
+| `install` | `--scope user\|project [--profile magni\|eli-magi] [--glyphs nerd\|unicode] [--project-dir DIR] [--force]` | Copy assets, merge statusLine + 5 hooks, then verify — all in one |
 | `set-profile` | `--scope ... --profile magni\|eli-magi\|off` | Change profile / turn off in that scope's settings.json |
+| `set-glyphs` | `--scope ... --glyphs nerd\|unicode` | Switch icon set (unicode = works without a Nerd Font) |
 | `uninstall` | `--scope ... [--project-dir DIR]` | Remove statusLine, hooks, and files for that scope |
 | `verify` | `--scope ... [--project-dir DIR]` | Pipe a sample payload through the configured command |
 
@@ -73,7 +74,7 @@ Run `setup.py check` (add `--project-dir` when inside a project) and report its 
 - A scope with `statusline_configured: true` but `statusline_is_thoridor: false` → an unrelated statusline exists there; show its command and confirm before replacing (then pass `--force` to install). A project-level `statusLine` overrides the user-level one.
 - A scope with `installed: true` → offer an in-place update instead of a fresh install.
 
-Also warn (don't block) that the gauge needs a truecolor terminal and a Nerd Font (glyphs U+F0E7, U+F07B, U+E0A0). Windows Terminal, iTerm2, kitty, etc. are fine; legacy cmd.exe is not.
+Also check the terminal: truecolor is required (Windows Terminal, iTerm2, kitty, etc. are fine; legacy cmd.exe is not). A Nerd Font is **optional** — see the glyph question in Step 2.
 
 ### Step 2 — Ask the user
 
@@ -83,14 +84,15 @@ Use AskUserQuestion with two questions:
    - *User (recommended)*: files → `~/.claude/statuslines/thoridor/`, config → `~/.claude/settings.json`.
    - *Project*: files → `<project>/.claude/statuslines/thoridor/`, config → `<project>/.claude/settings.json` (committable, applies to teammates too).
 2. **Profile** — `magni` (model / context / location — recommended default) or `eli-magi` (model / location / context).
+3. **Glyphs** — first print this exact test line to the user: `Icon test: [  ] ← do these render as a lightning bolt, folder, and branch symbol?` Then ask: icons visible → `nerd` (recommended); boxes/blanks/question marks → offer BOTH options: (a) `unicode` glyphs, which work in any font right now (the gauge uses `ϟ`), or (b) help installing a Nerd Font from nerdfonts.com and selecting it in their terminal profile, then use `nerd`. Font install is optional — never a requirement.
 
 If not inside a project directory, skip question 1 and install user-wide.
 
 ### Step 3 — Run the installer
 
 ```bash
-python3 "<skill-dir>/scripts/setup.py" install --scope user --profile magni
-# or: ... install --scope project --project-dir "<project>" --profile eli-magi
+python3 "<skill-dir>/scripts/setup.py" install --scope user --profile magni --glyphs nerd
+# or: ... install --scope project --project-dir "<project>" --profile eli-magi --glyphs unicode
 ```
 
 One command does everything: copies the files, merges settings.json (statusLine + the five animation hooks), and verifies by piping a sample payload through the exact configured command. Report the JSON result; on `ok: true` tell the user to restart Claude Code (or start a new session) and how to switch profiles later. On `ok: false`, fix what the `error` says and rerun.
@@ -169,7 +171,7 @@ Removes the `statusLine` entry, the five `working_state.py` hooks, and the insta
 
 ## HELP & TROUBLESHOOTING
 
-- **Boxes / missing glyphs** → terminal font is not a Nerd Font. Install one (e.g. from nerdfonts.com) and select it in the terminal profile.
+- **Boxes / missing glyphs** → terminal font is not a Nerd Font. Quick fix: `setup.py set-glyphs --scope <scope> --glyphs unicode` (works in any font). Nicer fix: install a Nerd Font from nerdfonts.com, select it in the terminal profile, and stay on `nerd`.
 - **Wrong / washed-out colors** → terminal lacks truecolor; use Windows Terminal, iTerm2, kitty, Ghostty, or any 24-bit-color terminal.
 - **Gauge never animates** → the `working_state.py` hooks are missing or point at the wrong path; re-run INSTALL Step 4. Also note Claude only refreshes the statusline about once per second, so the animation is coarse by design.
 - **No branch on row 2** → not a git repo, or git isn't installed.

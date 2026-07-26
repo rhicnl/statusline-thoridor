@@ -26,7 +26,7 @@ Colors are fixed; the **profile** picks the row order — or turns the statuslin
 
 - Python 3.10 or newer (`python3 --version` / `python --version`)
 - A truecolor terminal (Windows Terminal, iTerm2, kitty, Ghostty, and most modern terminals)
-- A [Nerd Font](https://www.nerdfonts.com/) selected in your terminal, for the lightning/folder/branch glyphs
+- Optional: a [Nerd Font](https://www.nerdfonts.com/) for the fancy lightning/folder/branch icons — **not required**: the `unicode` glyph mode renders a `ϟ` lightning gauge in any normal font (the installer asks which you want)
 - Works on Linux, macOS, and Windows
 
 ## Easy install (recommended)
@@ -65,7 +65,7 @@ Later you can also say things like *"switch thoridor to eli-magi"*, *"turn the t
 
 1. **Preflight.** Detect the OS. Confirm Python ≥ 3.10 exists (`python3` on Linux/macOS, `python` on Windows — use that command in every step below; on Windows beware the Store stub, prove it with `python -c "print(1)"`). If Python is missing, help the user install it first (`winget install Python.Python.3.12` / `brew install python3` / `sudo apt install python3`) rather than stopping. Confirm whether `~/.claude/settings.json` (or the project's `.claude/settings.json`) already has a `statusLine` entry; if so, tell the user what it is and get their OK to replace it.
 
-2. **Ask the user** (a) user-wide or project install, and (b) profile `magni` or `eli-magi` (the third profile, `off`, hides the statusline — offer it only when the user asks to disable Thoridor without uninstalling).
+2. **Ask the user** (a) user-wide or project install, (b) profile `magni` or `eli-magi` (the third profile, `off`, hides the statusline — offer it only when the user asks to disable Thoridor without uninstalling), and (c) glyphs: print `Icon test: [  ]` and ask whether those render as icons; if boxes, use `--glyphs unicode` (works in any font) or offer to help install a Nerd Font — the font is optional, never a requirement.
 
 3. **Copy the two scripts** from this repo's `.claude/skills/claude-statusline-thoridor/assets/` — `thoridor.py` and `working_state.py` — into the install directory, keeping them side by side:
    - user-wide: `~/.claude/statuslines/thoridor/`
@@ -84,7 +84,7 @@ Later you can also say things like *"switch thoridor to eli-magi"*, *"turn the t
    }
    ```
 
-   Replace `<INSTALL_DIR>` with the absolute install path (for project installs you may use `$CLAUDE_PROJECT_DIR/.claude/statuslines/thoridor`). On Windows use `python` and forward slashes in the path. Do not wrap the command in `uv run` — it only slows every refresh down.
+   Replace `<INSTALL_DIR>` with the absolute install path (for project installs you may use `$CLAUDE_PROJECT_DIR/.claude/statuslines/thoridor`). On Windows use `python` and forward slashes in the path. Append ` --glyphs unicode` when the user has no Nerd Font. Do not wrap the command in `uv run` — it only slows every refresh down.
 
 5. **Add the animation hooks.** Append (don't replace existing hooks) this entry to **each** of the hook events `SessionStart`, `UserPromptSubmit`, `Stop`, `StopFailure`, and `SessionEnd` in the same settings file:
 
@@ -110,7 +110,7 @@ Later you can also say things like *"switch thoridor to eli-magi"*, *"turn the t
 
 ## Troubleshooting
 
-- **Boxes or missing symbols** → your terminal font is not a Nerd Font; install one and select it in the terminal profile.
+- **Boxes or missing symbols** → your terminal font is not a Nerd Font. Either switch to `--glyphs unicode` (Claude) / `THORIDOR_GLYPHS=unicode` (Pi) — works in any font — or install a Nerd Font and select it in the terminal profile.
 - **Washed-out colors** → your terminal lacks truecolor support; switch terminals.
 - **Gauge never animates** → the `working_state.py` hooks are missing or point to the wrong path (step 5). Note Claude Code refreshes the statusline about once per second, so the animation is coarse by design.
 - **No branch on row 2** → not inside a git repo, or git isn't installed.
@@ -124,7 +124,7 @@ The repo also ships Thoridor for the Pi coding agent, as a Pi **extension** plus
 
 - Skill (for Pi agents): copy `.agents/skills/pi-statusline-thoridor/` into your Pi skills folder and ask Pi to install thoridor — it handles global vs project, profiles, and troubleshooting.
 - Manual install: copy `.agents/skills/pi-statusline-thoridor/templates/statusline-thoridor/` to `~/.pi/agent/extensions/statusline-thoridor/` (global) or `<project>/.pi/extensions/statusline-thoridor/` (project, loads once the project is trusted), then `/reload` in Pi or restart it.
-- Profiles use the same names, set via the `THORIDOR_PROFILE` env var before launching Pi (`magni` default, `eli-magi`, `off`). The Pi version additionally shows session name, live tok/s, and an MCP server count — Pi exposes real data for those.
+- Profiles use the same names, set persistently via `setup.mjs config --profile ...` (written to the extension's `thoridor.json`) or per-launch via the `THORIDOR_PROFILE` env var (`magni` default, `eli-magi`, `off`; env wins). Glyphs likewise: `config --glyphs unicode` or `THORIDOR_GLYPHS=unicode` for Nerd-Font-free rendering. The Pi version additionally shows session name, live tok/s, and an MCP server count — Pi exposes real data for those.
 - Turning it off: ask your Pi agent — it disables the extension in Pi's settings (globally or per project, via an `extensions` exclude); `THORIDOR_PROFILE=off` is the quick no-config alternative.
 - PR badge needs the `gh` CLI authenticated; it's simply omitted otherwise.
 

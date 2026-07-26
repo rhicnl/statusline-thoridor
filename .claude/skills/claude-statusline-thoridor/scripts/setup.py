@@ -84,8 +84,11 @@ def save_settings(path: Path, data: dict) -> None:
     temporary.replace(path)
 
 
-def statusline_command(install_dir: Path, profile: str) -> str:
-    return f'{python_command()} "{install_dir / "thoridor.py"}" --profile {profile}'
+def statusline_command(install_dir: Path, profile: str, glyphs: str = "nerd") -> str:
+    command = f'{python_command()} "{install_dir / "thoridor.py"}" --profile {profile}'
+    if glyphs != "nerd":
+        command += f" --glyphs {glyphs}"
+    return command
 
 
 def hook_command(install_dir: Path) -> str:
@@ -178,6 +181,17 @@ def extract_profile(command: str) -> str:
     return match.group(1) if match else "magni"
 
 
+def extract_glyphs(command: str) -> str:
+    match = re.search(r"--glyphs[= ]([\w-]+)", command)
+    return match.group(1) if match else "nerd"
+
+
+def set_command_flag(command: str, flag: str, value: str, default: str) -> str:
+    """Deterministically set --<flag> <value> in a statusline command string."""
+    stripped = re.sub(rf" ?--{flag}[= ][\w-]+", "", command)
+    return stripped if value == default else f"{stripped} --{flag} {value}"
+
+
 def cmd_check(args) -> dict:
     report: dict = {
         "ok": True,
@@ -202,6 +216,7 @@ def cmd_check(args) -> dict:
             "statusline_is_thoridor": is_thoridor_statusline(entry),
             "statusline_command": (entry or {}).get("command") if isinstance(entry, dict) else None,
             "profile": extract_profile(entry["command"]) if is_thoridor_statusline(entry) else None,
+            "glyphs": extract_glyphs(entry["command"]) if is_thoridor_statusline(entry) else None,
         }
     return report
 
@@ -225,7 +240,7 @@ def cmd_install(args) -> dict:
         shutil.copy2(ASSETS_DIR / name, install_dir / name)
     settings["statusLine"] = {
         "type": "command",
-        "command": statusline_command(install_dir, args.profile),
+        "command": statusline_command(install_dir, args.profile, args.glyphs),
         "padding": 0,
         "refreshInterval": 1,
     }
@@ -278,6 +293,23 @@ def cmd_set_profile(args) -> dict:
     }
 
 
+def cmd_set_glyphs(args) -> dict:
+    _, settings_path = resolve_paths(args.scope, args.project_dir, args.home)
+    settings = load_settings(settings_path)
+    entry = settings.get("statusLine")
+    if not is_thoridor_statusline(entry):
+        fail(f"no thoridor statusLine in {settings_path} — install first")
+    entry["command"] = set_command_flag(entry["command"], "glyphs", args.glyphs, "nerd")
+    save_settings(settings_path, settings)
+    return {
+        "ok": True,
+        "action": "set-glyphs",
+        "scope": args.scope,
+        "glyphs": args.glyphs,
+        "command": entry["command"],
+    }
+
+
 def cmd_uninstall(args) -> dict:
     install_dir, settings_path = resolve_paths(args.scope, args.project_dir, args.home)
     settings = load_settings(settings_path)
@@ -308,9 +340,10 @@ def cmd_verify(args) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["check", "install", "set-profile", "uninstall", "verify"])
+    parser.add_argument("command", choices=["check", "install", "set-profile", "set-glyphs", "uninstall", "verify"])
     parser.add_argument("--scope", choices=["user", "project"])
     parser.add_argument("--profile", choices=PROFILES, default="magni")
+    parser.add_argument("--glyphs", choices=["nerd", "unicode"], default="nerd")
     parser.add_argument("--project-dir")
     parser.add_argument("--home", help="override home directory (for tests)")
     parser.add_argument("--force", action="store_true", help="replace a non-thoridor statusLine")
@@ -324,6 +357,7 @@ def main() -> None:
         "check": cmd_check,
         "install": cmd_install,
         "set-profile": cmd_set_profile,
+        "set-glyphs": cmd_set_glyphs,
         "uninstall": cmd_uninstall,
         "verify": cmd_verify,
     }[args.command]

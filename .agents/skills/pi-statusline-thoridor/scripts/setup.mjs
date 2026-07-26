@@ -6,6 +6,8 @@
 // Commands:
 //   check       preflight report (read-only; pass --project-dir to include project scope)
 //   install     copy the extension template into the scope's Pi extensions dir
+//               (accepts --profile magni|eli-magi|off and --glyphs nerd|unicode)
+//   config      set --profile and/or --glyphs in the installed extension's thoridor.json
 //   disable     add an `extensions` exclude for the extension to the scope's Pi settings
 //   enable      remove that exclude
 //   uninstall   delete the extension dir and remove the exclude
@@ -41,6 +43,8 @@ function parseArgs(argv) {
     if (a === "--scope") args.scope = argv[++i];
     else if (a === "--project-dir") args.projectDir = argv[++i];
     else if (a === "--home") args.home = argv[++i];
+    else if (a === "--profile") args.profile = argv[++i];
+    else if (a === "--glyphs") args.glyphs = argv[++i];
     else if (a.startsWith("--")) fail(`unknown flag: ${a}`, 2);
     else args._.push(a);
   }
@@ -80,6 +84,26 @@ function isDisabled(settings) {
   return Array.isArray(settings.extensions) && settings.extensions.includes(EXCLUDE_ENTRY);
 }
 
+const PROFILES = ["magni", "eli-magi", "off"];
+const GLYPH_MODES = ["nerd", "unicode"];
+
+function writeLocalConfig(extDir, args) {
+  const file = path.join(extDir, "thoridor.json");
+  const config = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : {};
+  if (args.profile !== undefined) {
+    if (!PROFILES.includes(args.profile)) fail(`--profile must be one of: ${PROFILES.join(", ")}`, 2);
+    config.profile = args.profile;
+  }
+  if (args.glyphs !== undefined) {
+    if (!GLYPH_MODES.includes(args.glyphs)) fail(`--glyphs must be one of: ${GLYPH_MODES.join(", ")}`, 2);
+    config.glyphs = args.glyphs;
+  }
+  const tmp = `${file}.${process.pid}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(config, null, 2) + "\n");
+  fs.renameSync(tmp, file);
+  return config;
+}
+
 function cmdCheck(args) {
   const report = { ok: true, node: process.version, template: fs.existsSync(path.join(TEMPLATE_DIR, "index.ts")), scopes: {} };
   const scopes = [["global", null]];
@@ -111,7 +135,16 @@ function cmdInstall(args) {
     saveSettings(settingsPath, settings);
     reenabled = true;
   }
-  return { ok: true, action: "install", scope: args.scope, ext_dir: extDir, reenabled, next: "run /reload in Pi or restart it" };
+  const config = args.profile !== undefined || args.glyphs !== undefined ? writeLocalConfig(extDir, args) : undefined;
+  return { ok: true, action: "install", scope: args.scope, ext_dir: extDir, reenabled, ...(config ? { config } : {}), next: "run /reload in Pi or restart it" };
+}
+
+function cmdConfig(args) {
+  const { extDir } = resolvePaths(args.scope, args.projectDir, args.home);
+  if (!fs.existsSync(path.join(extDir, "index.ts"))) fail(`extension not installed at ${extDir} — run install first`);
+  if (args.profile === undefined && args.glyphs === undefined) fail("pass --profile and/or --glyphs", 2);
+  const config = writeLocalConfig(extDir, args);
+  return { ok: true, action: "config", scope: args.scope, config, next: "run /reload in Pi or restart it (THORIDOR_PROFILE/THORIDOR_GLYPHS env vars override this file)" };
 }
 
 function cmdDisable(args) {
@@ -154,7 +187,7 @@ function cmdUninstall(args) {
 
 const args = parseArgs(process.argv.slice(2));
 const command = args._[0];
-const handlers = { check: cmdCheck, install: cmdInstall, disable: cmdDisable, enable: cmdEnable, uninstall: cmdUninstall };
-if (!command || !handlers[command]) fail(`usage: setup.mjs check|install|disable|enable|uninstall [--scope global|project] [--project-dir DIR]`, 2);
+const handlers = { check: cmdCheck, install: cmdInstall, config: cmdConfig, disable: cmdDisable, enable: cmdEnable, uninstall: cmdUninstall };
+if (!command || !handlers[command]) fail(`usage: setup.mjs check|install|config|disable|enable|uninstall [--scope global|project] [--project-dir DIR] [--profile P] [--glyphs G]`, 2);
 if (command !== "check" && !["global", "project"].includes(args.scope ?? "")) fail(`--scope global|project is required for ${command}`, 2);
 out(handlers[command](args));

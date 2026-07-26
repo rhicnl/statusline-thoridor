@@ -30,7 +30,8 @@ node "<skill-dir>/scripts/setup.mjs" <command> --scope global|project [--project
 | Command | Does |
 |---|---|
 | `check` | Read-only preflight: template present, per-scope installed/disabled state (add `--project-dir` to include project scope) |
-| `install` | Copy the extension into the scope's Pi extensions dir (also clears a stale disable) |
+| `install` | Copy the extension into the scope's Pi extensions dir (also clears a stale disable); accepts `--profile` and `--glyphs` |
+| `config` | Set `--profile magni\|eli-magi\|off` and/or `--glyphs nerd\|unicode` persistently (written to the extension's `thoridor.json`; env vars override) |
 | `disable` | Add the `extensions` exclude to the scope's Pi settings.json — the config-level off switch |
 | `enable` | Remove that exclude |
 | `uninstall` | Delete the extension dir and remove the exclude |
@@ -62,12 +63,12 @@ The extension is self-contained: it imports only `@earendil-works/pi-coding-agen
 1. **Preflight.** Run `setup.mjs check` (with `--project-dir` when in a project) and report the JSON plainly. An `installed: true` scope → offer in-place update (install overwrites cleanly); `disabled: true` → installing re-enables it. Warn (don't block) that the glyphs need a truecolor terminal and a Nerd Font. Note whether `gh` is installed/authenticated — without it the PR badge simply won't show.
 2. **Ask the user**: global (all projects) or this project only? (Project installs live in `<project>/.pi/extensions/`, load only after the project is trusted in Pi, and are committable so teammates get it too.)
 3. **Run** `setup.mjs install --scope global` (or `--scope project --project-dir "<project>"`).
-4. **Profile** (optional): default is `magni` with no configuration. For `eli-magi` or `off`, the user sets `THORIDOR_PROFILE` in the environment Pi starts from (e.g. `export THORIDOR_PROFILE=eli-magi` in their shell rc).
+4. **Profile & glyphs** (optional): default is `magni` + `nerd` with no configuration. Ask the glyph question — print `Icon test: [  ]`; if the user sees boxes instead of icons, either set `--glyphs unicode` (works in any font, no install needed) or offer to help install a Nerd Font (optional, never required). Persist choices with `setup.mjs config --scope ... --profile eli-magi --glyphs unicode`; the `THORIDOR_PROFILE` / `THORIDOR_GLYPHS` env vars override per launch.
 5. **Activate**: in a running Pi session, `/reload` picks the extension up; otherwise it loads on the next Pi start. Verify: three colored rows appear as the footer, and `/thoridor-statusline` responds with "Thoridor statusline refreshed".
 
-## SWITCH PROFILE
+## SWITCH PROFILE / GLYPHS
 
-Set `THORIDOR_PROFILE` to `magni` or `eli-magi` in the environment Pi launches from (shell rc or the launch command, e.g. `THORIDOR_PROFILE=eli-magi pi`). A running Pi keeps the environment it started with, so after changing the variable the user must restart Pi.
+Persistent (preferred): `setup.mjs config --scope global|project --profile magni|eli-magi [--glyphs nerd|unicode]`, then `/reload` or restart Pi. Per-launch override: `THORIDOR_PROFILE` / `THORIDOR_GLYPHS` env vars set before launching Pi (env wins over the config file; a running Pi keeps the environment it started with).
 
 ## TURN OFF (disable in Pi config)
 
@@ -92,7 +93,7 @@ Deletes the extension directory and removes any disable entry from that scope's 
 
 ## HELP & TROUBLESHOOTING
 
-- **Boxes / missing glyphs** → terminal font is not a Nerd Font (needs U+F0E7, U+F07B, U+E0A0).
+- **Boxes / missing glyphs** → terminal font is not a Nerd Font. Quick fix: `setup.mjs config --scope <scope> --glyphs unicode` and `/reload` — renders in any font. Or install a Nerd Font and stay on `nerd`.
 - **Washed-out colors** → terminal lacks truecolor.
 - **No PR badge** → `gh` CLI missing or not authenticated for this repo's host; everything else still works.
 - **No branch shown** → not a git repository, or git isn't installed.

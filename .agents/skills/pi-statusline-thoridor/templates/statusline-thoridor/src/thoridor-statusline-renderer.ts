@@ -7,7 +7,9 @@ import {
   hyperlink,
   truncateToWidth,
 } from "@earendil-works/pi-tui";
-import { isAbsolute, relative, resolve, sep } from "node:path";
+import fs from "node:fs";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 import { alignRightOnLine, fg, fmtTokens, padFooterLine } from "./ansi.ts";
 import { getMcpInfoState } from "./mcp-info.ts";
 import type {
@@ -22,7 +24,23 @@ export const THORIDOR_ANIMATION_INTERVAL_MS = 120;
 const SEPARATOR_COLOR = "#808080";
 const DIM_COLOR = "#6e6e6e";
 const BAR_WIDTH = 26;
-const THUNDER_ICON = "\uf0e7";
+
+// Optional config written by scripts/setup.mjs next to index.ts; env vars win.
+function readLocalConfig(): { profile?: string; glyphs?: string } {
+  try {
+    const extensionDir = dirname(dirname(fileURLToPath(import.meta.url)));
+    return JSON.parse(fs.readFileSync(join(extensionDir, "thoridor.json"), "utf8"));
+  } catch {
+    return {};
+  }
+}
+const LOCAL_CONFIG = readLocalConfig();
+
+// Glyph sets: "nerd" needs a Nerd Font; "unicode" renders in any font.
+const GLYPH_MODE =
+  (process.env.THORIDOR_GLYPHS ?? LOCAL_CONFIG.glyphs ?? "nerd").trim().toLowerCase();
+const NERD = GLYPH_MODE !== "unicode";
+const THUNDER_ICON = NERD ? "\uf0e7" : "ϟ";
 const UNUSED_ICON = "·";
 // Row colors are fixed: provider/model blue, folder/branch red, context yellow.
 const THORIDOR_MODEL_COLOR = "#3333ff";
@@ -39,7 +57,9 @@ const THORIDOR_PROFILES: Record<string, readonly ThoridorRow[]> = {
 };
 
 export function resolveThoridorProfile(): readonly ThoridorRow[] {
-  const name = (process.env.THORIDOR_PROFILE ?? "").trim().toLowerCase();
+  const name = (process.env.THORIDOR_PROFILE ?? LOCAL_CONFIG.profile ?? "")
+    .trim()
+    .toLowerCase();
   return THORIDOR_PROFILES[name] ?? THORIDOR_PROFILES["magni"]!;
 }
 
@@ -50,8 +70,8 @@ export function isThoridorOff(): boolean {
 const THORIDOR_CONTEXT_BAR_COLOR = "#ffff1a";
 const THORIDOR_CONTEXT_TEXT_COLOR = "#b3b312";
 const THUNDER_FLASH_COLOR = "#ffff66";
-const DIR_ICON = "\uf07b";
-const BRANCH_ICON = "\ue0a0";
+const DIR_ICON = NERD ? "\uf07b " : "";
+const BRANCH_ICON = NERD ? "\ue0a0 " : "";
 const THUNDER_STRIKE_FRAMES = [
   { glyph: UNUSED_ICON, intensity: 0.25, flash: 0, emphasis: "dim" },
   { glyph: "ϟ", intensity: 0.7, flash: 0.45, emphasis: "normal" },
@@ -195,10 +215,10 @@ export function renderThoridorFooterRows(
   if (sessionName) row1 += ` ${fg(SEPARATOR_COLOR, `[${sessionName}]`)}`;
   row1 = truncateToWidth(row1, contentWidth, "...");
 
-  const dirPart = fg(THORIDOR_FOLDER_COLOR, `${DIR_ICON} \\${pwd}`);
+  const dirPart = fg(THORIDOR_FOLDER_COLOR, `${DIR_ICON}\\${pwd}`);
   let locationPart = ` ${dirPart}`;
   if (gitInfo.isRepository && gitInfo.branch) {
-    let gitPart = `${BRANCH_ICON} ${gitInfo.branch}`;
+    let gitPart = `${BRANCH_ICON}${gitInfo.branch}`;
     if (gitInfo.changedFiles > 0)
       gitPart += ` · ${gitInfo.changedFiles} changed`;
     const pr = renderPr(gitInfo);

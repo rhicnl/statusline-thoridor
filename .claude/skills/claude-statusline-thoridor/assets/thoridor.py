@@ -58,6 +58,9 @@ Options:
                      eli-magi  model / location / context
                      off       render nothing (statusline hidden)
                    The THORIDOR_PROFILE env var works too; the flag wins.
+  --glyphs MODE    Icon set: nerd (default; needs a Nerd Font) or unicode
+                   (plain characters, renders in any font). Env var
+                   THORIDOR_GLYPHS works too; the flag wins.
   -h, --help       Show this help.
 
 The animated gauge needs the bundled working_state.py registered as a hook
@@ -78,10 +81,15 @@ DIM_COLOR = "\033[38;2;110;110;110m"
 RESET = "\033[0m"
 
 BAR_WIDTH = 26
-THUNDER_ICON = chr(0xF0E7)
 UNUSED_ICON = "·"
-DIR_ICON = chr(0xF07B)
-BRANCH_ICON = chr(0xE0A0)
+# Glyph sets: "nerd" needs a Nerd Font; "unicode" renders in any font.
+GLYPH_SETS = {
+    "nerd": {"thunder": chr(0xF0E7), "dir": chr(0xF07B) + " ", "branch": chr(0xE0A0) + " "},
+    "unicode": {"thunder": "ϟ", "dir": "", "branch": ""},
+}
+THUNDER_ICON = GLYPH_SETS["nerd"]["thunder"]
+DIR_ICON = GLYPH_SETS["nerd"]["dir"]
+BRANCH_ICON = GLYPH_SETS["nerd"]["branch"]
 ANIMATION_INTERVAL_MS = 120
 THORIDOR_CONTEXT_BAR_COLOR = "#ffff1a"
 THORIDOR_CONTEXT_TEXT_COLOR = "#b3b312"
@@ -102,13 +110,33 @@ PROFILES = {
 }
 DEFAULT_PROFILE = "magni"
 
-THUNDER_STRIKE_FRAMES = (
-    {"glyph": UNUSED_ICON, "intensity": 0.25, "flash": 0.0, "emphasis": "dim"},
-    {"glyph": "ϟ", "intensity": 0.7, "flash": 0.45, "emphasis": "normal"},
-    {"glyph": THUNDER_ICON, "intensity": 1.0, "flash": 1.0, "emphasis": "bold"},
-    {"glyph": "ϟ", "intensity": 0.7, "flash": 0.45, "emphasis": "normal"},
-    {"glyph": UNUSED_ICON, "intensity": 0.25, "flash": 0.0, "emphasis": "dim"},
-)
+def _strike_frames() -> tuple:
+    return (
+        {"glyph": UNUSED_ICON, "intensity": 0.25, "flash": 0.0, "emphasis": "dim"},
+        {"glyph": "ϟ", "intensity": 0.7, "flash": 0.45, "emphasis": "normal"},
+        {"glyph": THUNDER_ICON, "intensity": 1.0, "flash": 1.0, "emphasis": "bold"},
+        {"glyph": "ϟ", "intensity": 0.7, "flash": 0.45, "emphasis": "normal"},
+        {"glyph": UNUSED_ICON, "intensity": 0.25, "flash": 0.0, "emphasis": "dim"},
+    )
+
+
+THUNDER_STRIKE_FRAMES = _strike_frames()
+
+
+def apply_glyph_mode(argv: list[str]) -> None:
+    """Switch glyph set from --glyphs or the THORIDOR_GLYPHS env var."""
+    global THUNDER_ICON, DIR_ICON, BRANCH_ICON, THUNDER_STRIKE_FRAMES
+    mode = os.environ.get("THORIDOR_GLYPHS", "")
+    for index, arg in enumerate(argv):
+        if arg == "--glyphs" and index + 1 < len(argv):
+            mode = argv[index + 1]
+        elif arg.startswith("--glyphs="):
+            mode = arg.split("=", 1)[1]
+    glyphs = GLYPH_SETS.get(mode.strip().lower(), GLYPH_SETS["nerd"])
+    THUNDER_ICON = glyphs["thunder"]
+    DIR_ICON = glyphs["dir"]
+    BRANCH_ICON = glyphs["branch"]
+    THUNDER_STRIKE_FRAMES = _strike_frames()
 MIN_STRIKE_CYCLE_FRAMES = 9
 STRIKE_CYCLE_VARIANCE = 9
 MIN_STRIKE_SPEED_PERCENT = 30
@@ -369,11 +397,11 @@ def generate_status_line(input_data: dict[str, Any], profile: tuple[str, ...]) -
     # maintain equivalent per-session working state.
     generating = is_working(input_data.get("session_id"))
 
-    directory_part = color(hex_ansi(FOLDER_COLOR), f"{DIR_ICON} \\{format_cwd(current_dir)}")
+    directory_part = color(hex_ansi(FOLDER_COLOR), f"{DIR_ICON}\\{format_cwd(current_dir)}")
     location_row = f" {directory_part}"
     branch, changed_files = get_git_info_cached(current_dir, generating) if current_dir else ("", 0)
     if branch:
-        git_text = f"{BRANCH_ICON} {branch}"
+        git_text = f"{BRANCH_ICON}{branch}"
         if changed_files > 0:
             git_text += f" · {changed_files} changed"
         pr = format_pr(input_data)
@@ -419,6 +447,7 @@ def main() -> None:
     profile = resolve_profile(sys.argv[1:])
     if not profile:  # "off": print nothing, which hides the statusline
         return
+    apply_glyph_mode(sys.argv[1:])
     try:
         input_text = sys.stdin.read()
         input_data = json.loads(input_text) if input_text.strip() else {}
