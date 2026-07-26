@@ -1,8 +1,8 @@
 # statusline-thoridor
 
-A three-row animated statusline for [Claude Code](https://claude.com/claude-code). This repo is all you need — a README (this file) and the statusline packaged as a Claude Code **skill** that installs and configures itself.
+A three-row animated statusline for [Claude Code](https://claude.com/claude-code) **and** the [Pi](https://github.com/badlogic/pi-mono) coding agent (where Thoridor originally comes from). This repo is all you need — this README plus, for each agent, the statusline packaged as an installer skill that sets everything up itself.
 
-> ⚡ Also included: the same statusline for the [Pi](https://github.com/badlogic/pi-mono) coding agent, where Thoridor originally comes from — see [Pi version](#pi-version) below.
+> ⚡ The guide below walks through the Claude Code version; Pi users jump to [Pi version](#pi-version).
 
 ```
  anthropic/claude-opus-5  xhigh
@@ -24,7 +24,7 @@ Colors are fixed; the **profile** picks the row order — or turns the statuslin
 
 ## Requirements
 
-- Python 3.10 or newer (`python3 --version` / `python --version`)
+- Claude Code version: Python 3.10 or newer (`python3 --version` / `python --version`); the installer helps set it up if missing. Pi version: nothing extra — Pi's own Node runtime is all it needs
 - A truecolor terminal (Windows Terminal, iTerm2, kitty, Ghostty, and most modern terminals)
 - Optional: a [Nerd Font](https://www.nerdfonts.com/) for the fancy lightning/folder/branch icons — **not required**: the `unicode` glyph mode renders `ϟ` gauge, `⌂` folder, and `⎇` branch icons in any normal font (the installer asks which you want)
 - Works on Linux, macOS, and Windows
@@ -122,8 +122,9 @@ Later you can also say things like *"switch thoridor to eli-magi"*, *"turn the t
 
 The repo also ships Thoridor for the Pi coding agent, as a Pi **extension** plus an installer skill.
 
-- Skill (for Pi agents): copy `.agents/skills/pi-statusline-thoridor/` into your Pi skills folder and ask Pi to install thoridor — it handles global vs project, profiles, and troubleshooting.
-- Manual install: copy `.agents/skills/pi-statusline-thoridor/templates/statusline-thoridor/` to `~/.pi/agent/extensions/statusline-thoridor/` (global) or `<project>/.pi/extensions/statusline-thoridor/` (project, loads once the project is trusted), then `/reload` in Pi or restart it.
+- Skill (recommended): copy `.agents/skills/pi-statusline-thoridor/` into your Pi skills folder (e.g. `~/.pi/agent/skills/`) and ask Pi to install thoridor — it runs a preflight, asks global vs project and the same icon-test glyph question, installs via the bundled script, and handles profiles, turn-off, and troubleshooting.
+- Script install (one command, no skill needed): `node .agents/skills/pi-statusline-thoridor/scripts/setup.mjs install --scope global` (or `--scope project --project-dir <project>`; add `--profile eli-magi --glyphs unicode` as desired), then `/reload` in Pi or restart it.
+- Fully manual: copy `.agents/skills/pi-statusline-thoridor/templates/statusline-thoridor/` to `~/.pi/agent/extensions/statusline-thoridor/` (global) or `<project>/.pi/extensions/statusline-thoridor/` (project, loads once the project is trusted), then `/reload`.
 - Profiles use the same names, set persistently via `setup.mjs config --profile ...` (written to the extension's `thoridor.json`) or per-launch via the `THORIDOR_PROFILE` env var (`magni` default, `eli-magi`, `off`; env wins). Glyphs likewise: `config --glyphs unicode` or `THORIDOR_GLYPHS=unicode` for Nerd-Font-free rendering. The Pi version additionally shows session name, live tok/s, and an MCP server count — Pi exposes real data for those.
 - Turning it off: ask your Pi agent — it disables the extension in Pi's settings (globally or per project, via an `extensions` exclude); `THORIDOR_PROFILE=off` is the quick no-config alternative.
 - PR badge needs the `gh` CLI authenticated; it's simply omitted otherwise.
@@ -134,7 +135,3 @@ The repo also ships Thoridor for the Pi coding agent, as a Pi **extension** plus
 - `working_state.py` runs as a lifecycle hook and tracks whether Claude is generating, so the thunder gauge only animates while Claude works.
 - Git branch/status is cached per directory (4 s TTL, atomic writes; stale data tolerated while generating) so the once-per-second refresh stays around 35 ms.
 - The context bar shows Claude Code's own numbers: raw usage over the model's full context window (200k, or 1M for extended-context models). Claude Code does not expose its auto-compact threshold to statuslines, so "distance to compaction" isn't shown.
-
-## Credits
-
-A Claude Code port of the Thoridor statusline from [Pi](https://github.com/badlogic/pi-mono). A Pi statusline skill is in the works as well.
