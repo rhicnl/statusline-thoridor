@@ -2,7 +2,7 @@
 
 A three-row animated statusline for [Claude Code](https://claude.com/claude-code). This repo is all you need — a README (this file) and the statusline packaged as a Claude Code **skill** that installs and configures itself.
 
-> ⚡ Coming soon: a companion skill for the [Pi](https://github.com/badlogic/pi-mono) coding agent, where Thoridor originally comes from — so you get the same statusline in both.
+> ⚡ Also included: the same statusline for the [Pi](https://github.com/badlogic/pi-mono) coding agent, where Thoridor originally comes from — see [Pi version](#pi-version) below.
 
 ```
  anthropic/claude-opus-5  xhigh
@@ -117,6 +117,16 @@ Later you can also say things like *"switch thoridor to eli-magi"*, *"turn the t
 - **Branch info looks stale** → expected: git info is cached for a few seconds (longer while Claude is generating). Delete `<INSTALL_DIR>/.state/git-*.json` to force a refresh.
 - **An error line appears instead of the statusline** → run the verify command from step 6 to see the traceback.
 - `python3 thoridor.py --help` prints the built-in usage text.
+
+## Pi version
+
+The repo also ships Thoridor for the Pi coding agent, as a Pi **extension** plus an installer skill.
+
+- Skill (for Pi agents): copy `.agents/skills/pi-statusline-thoridor/` into your Pi skills folder and ask Pi to install thoridor — it handles global vs project, profiles, and troubleshooting.
+- Manual install: copy `.agents/skills/pi-statusline-thoridor/templates/statusline-thoridor/` to `~/.pi/agent/extensions/statusline-thoridor/` (global) or `<project>/.pi/extensions/statusline-thoridor/` (project, loads once the project is trusted), then `/reload` in Pi or restart it.
+- Profiles use the same names, set via the `THORIDOR_PROFILE` env var before launching Pi (`magni` default, `eli-magi`, `off`). The Pi version additionally shows session name, live tok/s, and an MCP server count — Pi exposes real data for those.
+- Turning it off: ask your Pi agent — it disables the extension in Pi's settings (globally or per project, via an `extensions` exclude); `THORIDOR_PROFILE=off` is the quick no-config alternative.
+- PR badge needs the `gh` CLI authenticated; it's simply omitted otherwise.
 
 ## How it works
 

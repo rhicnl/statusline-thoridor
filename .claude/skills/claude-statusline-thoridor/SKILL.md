@@ -106,7 +106,12 @@ Expect three colored rows and exit code 0. Then tell the user to restart Claude 
 
 ## SWITCH PROFILE / TURN OFF
 
-Edit the `--profile` value in the configured `statusLine.command` (find it in whichever settings.json holds it). Alternatively the user can set the `THORIDOR_PROFILE` env var — the flag wins over the env var. `--profile off` renders nothing, hiding the statusline without uninstalling — the quick "turn it off" switch; pick a real profile again to bring it back.
+Both are config edits to the settings.json of the scope the user names — global (`~/.claude/settings.json`) or project (`<project>/.claude/settings.json`); ask if unclear which they mean.
+
+- **Switch profile**: edit the `--profile` value in that file's `statusLine.command` (`magni` / `eli-magi`).
+- **Turn off**: set `--profile off` in that file's `statusLine.command` — the script renders nothing, hiding the statusline while staying installed. If the user wants a *project* switched off while their global install stays on, and the project has no `statusLine` entry yet, add one there with `--profile off` (project settings override user settings). Re-enable by setting a real profile again (or removing the project override).
+
+Always merge — never touch other keys. The `THORIDOR_PROFILE` env var also works (the `--profile` flag wins), but prefer the config edit so the state is visible in settings.json.
 
 ## UNINSTALL
 

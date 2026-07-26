@@ -1,7 +1,7 @@
-export const MODEL_INFO_CHANNEL = "rh-dashboard:model-info";
-export const TOKEN_INFO_CHANNEL = "rh-dashboard:token-info";
-export const GIT_INFO_CHANNEL = "rh-dashboard:git-info";
-export const REFRESH_CHANNEL = "rh-dashboard:refresh";
+export const MODEL_INFO_CHANNEL = "statusline-thoridor:model-info";
+export const TOKEN_INFO_CHANNEL = "statusline-thoridor:token-info";
+export const GIT_INFO_CHANNEL = "statusline-thoridor:git-info";
+export const REFRESH_CHANNEL = "statusline-thoridor:refresh";
 
 export interface ModelInfoState {
   provider: string;
