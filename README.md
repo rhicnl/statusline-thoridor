@@ -2,6 +2,8 @@
 
 A three-row animated statusline for [Claude Code](https://claude.com/claude-code). This repo is all you need — a README (this file) and the statusline packaged as a Claude Code **skill** that installs and configures itself.
 
+> ⚡ Coming soon: a companion skill for the [Pi](https://github.com/badlogic/pi-mono) coding agent, where Thoridor originally comes from — so you get the same statusline in both.
+
 ```
  anthropic/claude-opus-5  xhigh
   \~/dev/my-project ·  main · 3 changed · PR#42
@@ -124,4 +126,4 @@ Later you can also say things like *"switch thoridor to eli-magi"*, *"uninstall 
 
 ## Credits
 
-A Claude Code port of the Thoridor statusline from [Pi](https://github.com/badlogic/pi-mono).
+A Claude Code port of the Thoridor statusline from [Pi](https://github.com/badlogic/pi-mono). A Pi statusline skill is in the works as well.
